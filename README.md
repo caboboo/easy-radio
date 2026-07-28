@@ -13,7 +13,7 @@
 直接打開 `index.html` 可以預覽畫面，但部分瀏覽器對本機檔案的串流播放有限制。
 最可靠的測試方式是部署至 GitHub Pages。
 
-## GitHub Pages
+## Radio Player Pages
 
 `https://catontsai.github.io/papa-radio/`
 
