@@ -13,12 +13,30 @@
 <body>
   <main class="app" aria-label="阿爸專用網路廣播機">
     <header class="topbar">
-      <div class="volume-note" aria-label="音量請使用 iPhone 側邊按鍵">
+      <div id="volumeNote" class="volume-note" aria-label="音量請使用 iPhone 側邊按鍵">
         <span class="speaker" aria-hidden="true">🔊</span>
         <span>音量請用手機側邊按鍵</span>
       </div>
 
-      <div class="clock" aria-live="polite">
+      <div id="desktopVolume" class="desktop-volume" hidden>
+        <label class="volume-control" for="volumeSlider">
+          <span id="volumeText">音量 100%</span>
+          <input
+            id="volumeSlider"
+            class="volume-slider"
+            type="range"
+            min="0"
+            max="100"
+            step="1"
+            value="100"
+          >
+        </label>
+        <button id="muteButton" class="mute-button" type="button" aria-pressed="false">
+          靜音
+        </button>
+      </div>
+
+      <div class="clock">
         <div id="date">----/--/--</div>
         <div id="time">--:--</div>
       </div>
@@ -51,7 +69,7 @@
 
     <footer class="footer">
       <span>阿爸專用網路廣播機</span>
-      <span>v0.1</span>
+      <span>v0.2</span>
     </footer>
 
     <audio id="radio" preload="none" playsinline>

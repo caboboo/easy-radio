@@ -2,6 +2,10 @@
   box-sizing: border-box;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 :root {
   color-scheme: light;
   --wood: #8a4e1f;
@@ -76,6 +80,56 @@ button {
 
 .speaker {
   font-size: 1.45em;
+}
+
+.desktop-volume {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(190px, 1fr) auto;
+  align-items: end;
+  gap: 14px;
+  max-width: 700px;
+}
+
+.volume-control {
+  display: grid;
+  gap: 4px;
+  font-size: clamp(18px, 2.5vw, 28px);
+  font-weight: 800;
+}
+
+.volume-slider {
+  width: 100%;
+  min-height: 38px;
+  margin: 0;
+  accent-color: var(--red);
+  cursor: pointer;
+}
+
+.mute-button {
+  min-height: 52px;
+  padding: 8px 18px;
+  border: 2px solid #95180f;
+  border-radius: 14px;
+  background: #fff5e7;
+  color: #73140e;
+  font-size: clamp(18px, 2.3vw, 26px);
+  font-weight: 850;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mute-button[aria-pressed="true"] {
+  background: #73140e;
+  color: #fff;
+}
+
+.volume-slider:focus-visible,
+.mute-button:focus-visible,
+.play-button:focus-visible {
+  outline: 4px solid #1267c4;
+  outline-offset: 3px;
 }
 
 .clock {
