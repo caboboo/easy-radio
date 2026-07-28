@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#4a2b12">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="阿爸廣播機">
+  <title>阿爸專用網路廣播機</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app" aria-label="阿爸專用網路廣播機">
+    <header class="topbar">
+      <div class="volume-note" aria-label="音量請使用 iPhone 側邊按鍵">
+        <span class="speaker" aria-hidden="true">🔊</span>
+        <span>音量請用手機側邊按鍵</span>
+      </div>
+
+      <div class="clock" aria-live="polite">
+        <div id="date">----/--/--</div>
+        <div id="time">--:--</div>
+      </div>
+    </header>
+
+    <section class="player-card">
+      <div class="station-mark" aria-hidden="true">
+        <strong>i</strong>
+        <span>Radio</span>
+        <small>FM96.3</small>
+      </div>
+
+      <div class="station-info">
+        <h1>中廣音樂網</h1>
+        <p class="frequency">i Radio FM96.3</p>
+
+        <p id="song" class="song">目前曲目：電台未提供</p>
+
+        <div id="status" class="status" role="status" aria-live="polite">
+          <span class="status-dot"></span>
+          <span id="statusText">準備播放</span>
+        </div>
+
+        <button id="playButton" class="play-button" type="button" aria-pressed="false">
+          <span id="playIcon" class="play-icon" aria-hidden="true">▶</span>
+          <span id="playText">播放</span>
+        </button>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <span>阿爸專用網路廣播機</span>
+      <span>v0.1</span>
+    </footer>
+
+    <audio id="radio" preload="none" playsinline>
+      <source src="https://stream.rcs.revma.com/ndk05tyy2tzuv" type="audio/mpeg">
+    </audio>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
