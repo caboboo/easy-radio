@@ -301,6 +301,91 @@ button {
   text-shadow: 0 2px 2px rgba(0, 0, 0, 0.4);
 }
 
+@media (min-width: 1200px) and (max-height: 900px) {
+  .app {
+    gap: 10px;
+    padding-top: max(10px, env(safe-area-inset-top));
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+  }
+
+  .topbar {
+    padding-block: 6px;
+  }
+
+  #date {
+    font-size: clamp(18px, 2.6dvh, 24px);
+  }
+
+  #time {
+    font-size: clamp(38px, 6.2dvh, 54px);
+  }
+
+  .player-card {
+    align-self: start;
+    gap: clamp(20px, 4dvh, 36px);
+    padding: clamp(22px, 3.5dvh, 30px);
+  }
+
+  .station-mark {
+    width: min(100%, 40dvh);
+    justify-self: center;
+  }
+
+  .station-mark strong {
+    font-size: clamp(92px, 16dvh, 138px);
+  }
+
+  .station-mark span {
+    font-size: clamp(28px, 5.5dvh, 46px);
+  }
+
+  .station-mark small {
+    font-size: clamp(20px, 3.5dvh, 30px);
+  }
+
+  .station-info h1 {
+    font-size: clamp(42px, 7.5dvh, 64px);
+  }
+
+  .frequency {
+    margin-bottom: 10px;
+    font-size: clamp(28px, 4.7dvh, 40px);
+  }
+
+  .song {
+    margin-bottom: 6px;
+    font-size: clamp(20px, 3dvh, 26px);
+  }
+
+  .status {
+    margin-bottom: 8px;
+    font-size: clamp(21px, 3.3dvh, 28px);
+  }
+
+  .playback-controls {
+    gap: 10px;
+    padding: 10px;
+  }
+
+  .play-button {
+    min-height: clamp(104px, 16dvh, 140px);
+    font-size: clamp(42px, 7dvh, 60px);
+  }
+
+  .volume-control {
+    font-size: clamp(18px, 3dvh, 24px);
+  }
+
+  .mute-button {
+    min-height: 48px;
+    font-size: clamp(18px, 2.6dvh, 22px);
+  }
+
+  .footer {
+    font-size: clamp(14px, 2.2dvh, 18px);
+  }
+}
+
 @media (orientation: portrait) {
   .topbar {
     align-items: stretch;
@@ -370,5 +455,11 @@ button {
 
   .footer {
     display: none;
+  }
+}
+
+@media (min-width: 1200px) and (max-height: 500px) {
+  .footer {
+    display: flex;
   }
 }
