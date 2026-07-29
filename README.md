@@ -1,8 +1,8 @@
-# 阿爸專用網路廣播機 v0.2
+# Easy Radio v0.2.1
 
-第一個 Milestone：在 iPhone Safari / GitHub Pages 上播放「中廣音樂網 i Radio FM96.3」。
+Easy Radio 是一個在 iPhone Safari 與電腦瀏覽器播放「中廣音樂網 i Radio FM96.3」的長輩友善靜態網站。
 
-v0.2 在維持原有長輩友善介面的前提下，加入電腦瀏覽器音量控制，並改善播放狀態同步。
+v0.2.1 以穩定度為優先，避免重複播放請求及主動重載串流，並將電腦版播放與音量控制整理在同一個視覺群組。
 
 ## 檔案
 
@@ -17,7 +17,7 @@ v0.2 在維持原有長輩友善介面的前提下，加入電腦瀏覽器音量
 
 ## Radio Player Pages
 
-`https://catontsai.github.io/papa-radio/`
+`https://caboboo.github.io/easy-radio/`
 
 ## 音量控制
 

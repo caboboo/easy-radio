@@ -17,21 +17,30 @@ let playRequestId = 0;
 let volumeBeforeMute = 1;
 let volumeAtSliderStart = 1;
 
+const dateFormatter = new Intl.DateTimeFormat("zh-TW", {
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  weekday: "short"
+});
+const timeFormatter = new Intl.DateTimeFormat("zh-TW", {
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false
+});
+
 function updateClock() {
   const now = new Date();
+  const nextDate = dateFormatter.format(now);
+  const nextTime = timeFormatter.format(now);
 
-  dateElement.textContent = new Intl.DateTimeFormat("zh-TW", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    weekday: "short"
-  }).format(now);
+  if (dateElement.textContent !== nextDate) {
+    dateElement.textContent = nextDate;
+  }
 
-  timeElement.textContent = new Intl.DateTimeFormat("zh-TW", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false
-  }).format(now);
+  if (timeElement.textContent !== nextTime) {
+    timeElement.textContent = nextTime;
+  }
 }
 
 function setStatus(message, state = "") {
@@ -46,12 +55,15 @@ function setPlayingUI(isPlaying) {
   playText.textContent = isPlaying ? "暫停播放" : "播放";
 }
 
-function isIOSDevice() {
+function usesDeviceVolumeControls() {
   const isClassicIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
   const isIPadDesktopMode =
     navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
+  const isMobilePointer = window.matchMedia(
+    "(hover: none) and (pointer: coarse)"
+  ).matches;
 
-  return isClassicIOS || isIPadDesktopMode;
+  return isClassicIOS || isIPadDesktopMode || isMobilePointer;
 }
 
 function syncVolumeUI() {
@@ -69,7 +81,7 @@ function syncVolumeUI() {
 }
 
 function initializeVolumeControls() {
-  if (isIOSDevice()) {
+  if (usesDeviceVolumeControls()) {
     volumeNote.hidden = false;
     desktopVolume.hidden = true;
     return;
@@ -121,17 +133,15 @@ function toggleMute() {
 }
 
 async function startRadio() {
+  if (wantsToPlay || !radio.paused) {
+    return;
+  }
+
   wantsToPlay = true;
   const requestId = ++playRequestId;
 
   try {
     setStatus("連線中，請稍候…", "is-loading");
-
-    // 直播若曾中斷，重新載入串流可提高再次連線的成功率。
-    if (radio.error || radio.ended) {
-      radio.load();
-    }
-
     await radio.play();
   } catch (error) {
     if (!wantsToPlay || requestId !== playRequestId) {
@@ -148,7 +158,11 @@ async function startRadio() {
 function stopRadio() {
   wantsToPlay = false;
   playRequestId += 1;
-  radio.pause();
+
+  if (!radio.paused) {
+    radio.pause();
+  }
+
   setPlayingUI(false);
   setStatus("已暫停");
 }
@@ -201,7 +215,7 @@ radio.addEventListener("error", () => {
 });
 
 radio.addEventListener("pause", () => {
-  if (!radio.ended) {
+  if (!radio.ended && wantsToPlay) {
     wantsToPlay = false;
     playRequestId += 1;
     setPlayingUI(false);

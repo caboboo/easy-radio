@@ -82,15 +82,6 @@ button {
   font-size: 1.45em;
 }
 
-.desktop-volume {
-  flex: 1;
-  display: grid;
-  grid-template-columns: minmax(190px, 1fr) auto;
-  align-items: end;
-  gap: 14px;
-  max-width: 700px;
-}
-
 .volume-control {
   display: grid;
   gap: 4px;
@@ -134,6 +125,7 @@ button {
 
 .clock {
   min-width: 190px;
+  margin-left: auto;
   text-align: center;
   border: 2px solid #c9b697;
   border-radius: 16px;
@@ -248,6 +240,23 @@ button {
   color: #b00020;
 }
 
+.playback-controls {
+  display: grid;
+  gap: 14px;
+  padding: 14px;
+  border: 2px solid #dac7aa;
+  border-radius: 28px;
+  background: #fffdf8;
+}
+
+.desktop-volume {
+  display: grid;
+  grid-template-columns: minmax(190px, 1fr) auto;
+  align-items: end;
+  gap: 14px;
+  padding: 0 4px 2px;
+}
+
 .play-button {
   width: 100%;
   min-height: clamp(104px, 18vh, 170px);
@@ -324,6 +333,10 @@ button {
   .play-button {
     min-height: 112px;
   }
+
+  .playback-controls {
+    padding: 10px;
+  }
 }
 
 @media (max-height: 500px) and (orientation: landscape) {
@@ -348,6 +361,11 @@ button {
 
   .play-button {
     min-height: 82px;
+  }
+
+  .playback-controls {
+    gap: 8px;
+    padding: 8px;
   }
 
   .footer {

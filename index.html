@@ -6,34 +6,16 @@
   <meta name="theme-color" content="#4a2b12">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="阿爸廣播機">
-  <title>阿爸專用網路廣播機</title>
+  <meta name="apple-mobile-web-app-title" content="Easy Radio">
+  <title>Easy Radio 網路廣播機</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <main class="app" aria-label="阿爸專用網路廣播機">
+  <main class="app" aria-label="Easy Radio 網路廣播機">
     <header class="topbar">
-      <div id="volumeNote" class="volume-note" aria-label="音量請使用 iPhone 側邊按鍵">
+      <div id="volumeNote" class="volume-note" aria-label="音量請使用手機側邊按鍵">
         <span class="speaker" aria-hidden="true">🔊</span>
         <span>音量請用手機側邊按鍵</span>
-      </div>
-
-      <div id="desktopVolume" class="desktop-volume" hidden>
-        <label class="volume-control" for="volumeSlider">
-          <span id="volumeText">音量 100%</span>
-          <input
-            id="volumeSlider"
-            class="volume-slider"
-            type="range"
-            min="0"
-            max="100"
-            step="1"
-            value="100"
-          >
-        </label>
-        <button id="muteButton" class="mute-button" type="button" aria-pressed="false">
-          靜音
-        </button>
       </div>
 
       <div class="clock">
@@ -60,16 +42,36 @@
           <span id="statusText">準備播放</span>
         </div>
 
-        <button id="playButton" class="play-button" type="button" aria-pressed="false">
-          <span id="playIcon" class="play-icon" aria-hidden="true">▶</span>
-          <span id="playText">播放</span>
-        </button>
+        <div class="playback-controls">
+          <button id="playButton" class="play-button" type="button" aria-pressed="false">
+            <span id="playIcon" class="play-icon" aria-hidden="true">▶</span>
+            <span id="playText">播放</span>
+          </button>
+
+          <div id="desktopVolume" class="desktop-volume" hidden>
+            <label class="volume-control" for="volumeSlider">
+              <span id="volumeText">音量 100%</span>
+              <input
+                id="volumeSlider"
+                class="volume-slider"
+                type="range"
+                min="0"
+                max="100"
+                step="1"
+                value="100"
+              >
+            </label>
+            <button id="muteButton" class="mute-button" type="button" aria-pressed="false">
+              靜音
+            </button>
+          </div>
+        </div>
       </div>
     </section>
 
     <footer class="footer">
-      <span>阿爸專用網路廣播機</span>
-      <span>v0.2</span>
+      <span>Easy Radio</span>
+      <span>v0.2.1</span>
     </footer>
 
     <audio id="radio" preload="none" playsinline>
