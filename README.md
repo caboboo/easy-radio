@@ -1,4 +1,4 @@
-# Easy Radio v0.3.1
+# Easy Radio v0.3.2
 
 Easy Radio 是一個在 iPhone Safari 與電腦瀏覽器播放「中廣音樂網 i Radio FM96.3」的長輩友善靜態網站。
 
@@ -10,6 +10,17 @@ v0.3.0 加入保守的受控斷線恢復：短暫緩衝會先交由瀏覽器自�
 - `index.html`：網頁的結構與內容
 - `style.css`：畫面外觀與橫直式排版
 - `script.js`：播放按鈕、狀態與日期時間
+- `programs-data.js`：已確認的節目資料
+- `program-search.js`：本機節目搜尋
+- `program-menu.js`：節目選單與列表互動
+
+## 節目選單
+
+按頁面上方的「節目」即可開啟選單，輸入文字後會立即搜尋節目名稱、電台名稱、主持人、關鍵字、簡介與播出時間。本功能只搜尋 `programs-data.js` 中已收錄的本機資料，不會搜尋整個網路。
+
+新增節目時，請在 `programs-data.js` 的 `programs` 陣列加入一筆物件，使用唯一的 `id`，並可填入 `title`、`stationId`、`stationName`、`hosts`、`scheduleText`、`description` 及 `keywords`。`hosts` 與 `keywords` 使用陣列；沒有資料的選填欄位可省略。
+
+只可填入已由可靠來源確認的真實節目資料，不得為了填滿列表而加入未確認或虛構內容。目前正式頁面尚無可確認的節目，因此會顯示空狀態。
 
 ## 本機快速測試
 

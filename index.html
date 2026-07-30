@@ -11,8 +11,77 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <div id="programOverlay" class="program-overlay" aria-hidden="true"></div>
+
+  <aside
+    id="programPanel"
+    class="program-panel"
+    role="dialog"
+    aria-modal="true"
+    aria-hidden="true"
+    aria-labelledby="programPanelTitle"
+    inert
+  >
+    <div class="program-panel-header">
+      <h2 id="programPanelTitle" tabindex="-1">
+        已收錄節目（<span id="programCount">0</span>）
+      </h2>
+      <button
+        id="programCloseButton"
+        class="program-close-button"
+        type="button"
+        aria-label="關閉節目選單"
+      >
+        關閉
+      </button>
+    </div>
+
+    <div class="program-search">
+      <label for="programSearch">搜尋節目</label>
+      <div class="program-search-controls">
+        <input
+          id="programSearch"
+          type="search"
+          placeholder="搜尋節目、主持人或電台"
+          aria-describedby="programSearchStatus"
+          autocomplete="off"
+        >
+        <button
+          id="programSearchClear"
+          class="program-search-clear"
+          type="button"
+          aria-label="清除節目搜尋"
+          hidden
+        >
+          清除
+        </button>
+      </div>
+    </div>
+
+    <p
+      id="programSearchStatus"
+      class="program-search-status"
+      aria-live="polite"
+    >
+      共 0 筆節目
+    </p>
+    <div id="programList" class="program-list" aria-label="節目列表"></div>
+  </aside>
+
   <main class="app" aria-label="Easy Radio 網路廣播機">
     <header class="topbar">
+      <button
+        id="programMenuButton"
+        class="program-menu-button"
+        type="button"
+        aria-label="開啟節目選單"
+        aria-expanded="false"
+        aria-controls="programPanel"
+      >
+        <span aria-hidden="true">☰</span>
+        <span>節目</span>
+      </button>
+
       <div id="volumeNote" class="volume-note" aria-label="音量請使用手機側邊按鍵">
         <span class="speaker" aria-hidden="true">🔊</span>
         <span>音量請用手機側邊按鍵</span>
@@ -71,7 +140,7 @@
 
     <footer class="footer">
       <span>Easy Radio</span>
-      <span>v0.3.1</span>
+      <span>v0.3.2</span>
     </footer>
 
     <audio id="radio" preload="none" playsinline>
@@ -80,5 +149,8 @@
   </main>
 
   <script src="script.js"></script>
+  <script src="programs-data.js"></script>
+  <script src="program-search.js"></script>
+  <script src="program-menu.js"></script>
 </body>
 </html>
