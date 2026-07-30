@@ -1,16 +1,21 @@
 const radio = document.getElementById("radio");
+const radioSource = document.getElementById("radioSource");
 const playButton = document.getElementById("playButton");
 const playIcon = document.getElementById("playIcon");
 const playText = document.getElementById("playText");
-const status = document.getElementById("status");
 const statusText = document.getElementById("statusText");
 const dateElement = document.getElementById("date");
 const timeElement = document.getElementById("time");
-const volumeNote = document.getElementById("volumeNote");
 const desktopVolume = document.getElementById("desktopVolume");
 const volumeSlider = document.getElementById("volumeSlider");
 const volumeText = document.getElementById("volumeText");
 const muteButton = document.getElementById("muteButton");
+const stationNameElement = document.getElementById("stationName");
+const stationSubtitleElement = document.getElementById("stationSubtitle");
+const stationFrequencyElement = document.getElementById("stationFrequency");
+const stations = Array.isArray(window.EASY_RADIO_STATIONS)
+  ? window.EASY_RADIO_STATIONS
+  : [];
 
 const PlaybackState = Object.freeze({
   READY: "ready",
@@ -39,6 +44,7 @@ let activePlayRequest = null;
 let lastPlayingTime = 0;
 let volumeBeforeMute = 1;
 let volumeAtSliderStart = 1;
+let currentStation = stations[0] || null;
 
 const dateFormatter = new Intl.DateTimeFormat("zh-TW", {
   year: "numeric",
@@ -67,21 +73,15 @@ function updateClock() {
 }
 
 const playbackUI = {
-  [PlaybackState.READY]: { message: "準備播放", style: "" },
-  [PlaybackState.CONNECTING]: { message: "正在連線", style: "is-loading" },
-  [PlaybackState.PLAYING]: { message: "正在播放", style: "is-playing" },
-  [PlaybackState.BUFFERING]: { message: "正在緩衝", style: "is-loading" },
-  [PlaybackState.OFFLINE]: { message: "網路連線中斷", style: "is-error" },
-  [PlaybackState.RECONNECTING]: {
-    message: "正在重新連線",
-    style: "is-loading"
-  },
-  [PlaybackState.ERROR]: { message: "暫時無法播放", style: "is-error" },
-  [PlaybackState.NEEDS_USER]: {
-    message: "請按播放繼續收聽",
-    style: "is-error"
-  },
-  [PlaybackState.PAUSED]: { message: "已暫停", style: "" }
+  [PlaybackState.READY]: { message: "準備播放" },
+  [PlaybackState.CONNECTING]: { message: "正在連線" },
+  [PlaybackState.PLAYING]: { message: "正在播放" },
+  [PlaybackState.BUFFERING]: { message: "正在緩衝" },
+  [PlaybackState.OFFLINE]: { message: "網路連線中斷" },
+  [PlaybackState.RECONNECTING]: { message: "正在重新連線" },
+  [PlaybackState.ERROR]: { message: "暫時無法播放" },
+  [PlaybackState.NEEDS_USER]: { message: "請按播放繼續收聽" },
+  [PlaybackState.PAUSED]: { message: "已暫停" }
 };
 
 function logPlayback(message, details) {
@@ -106,7 +106,6 @@ function updatePlaybackUI() {
     (playbackState === PlaybackState.ERROR && !userWantsPlayback);
 
   statusText.textContent = ui.message;
-  status.className = `status${ui.style ? ` ${ui.style}` : ""}`;
   playButton.classList.toggle("is-playing", isPlaying);
   playButton.setAttribute("aria-pressed", String(isPlaying));
   playIcon.textContent = canCancelPlayback ? "Ⅱ" : "▶";
@@ -127,6 +126,107 @@ function setPlaybackState(nextState) {
   }
 
   updatePlaybackUI();
+}
+
+function updateStationUI(station) {
+  const subtitle = station?.subtitle ? String(station.subtitle).trim() : "";
+  const frequency = station?.frequency ? String(station.frequency).trim() : "";
+
+  stationNameElement.textContent = station?.name || "";
+  stationSubtitleElement.textContent = subtitle;
+  stationSubtitleElement.hidden = !subtitle;
+  stationFrequencyElement.textContent = frequency;
+  stationFrequencyElement.hidden = !frequency;
+}
+
+function initializeCurrentStation() {
+  if (!currentStation?.streamUrl) {
+    console.warn("[Easy Radio] 沒有可播放的電台資料");
+    playButton.disabled = true;
+    statusText.textContent = "目前沒有可播放的電台";
+    return;
+  }
+
+  updateStationUI(currentStation);
+  radioSource.src = currentStation.streamUrl;
+}
+
+function notifyStationChange(station) {
+  document.dispatchEvent(
+    new CustomEvent("easy-radio:station-change", {
+      detail: { stationId: station.id }
+    })
+  );
+}
+
+function selectStation(stationId) {
+  const nextStation = stations.find((station) => station.id === stationId);
+
+  if (!nextStation?.streamUrl) {
+    console.warn("[Easy Radio] 找不到可切換的電台", { stationId });
+    return { changed: false, reason: "not-found" };
+  }
+
+  if (currentStation?.id === nextStation.id) {
+    logPlayback("選擇目前電台，保持現有串流", {
+      stationId: nextStation.id
+    });
+    return { changed: false, reason: "already-selected" };
+  }
+
+  const shouldContinuePlayback = userWantsPlayback;
+
+  logPlayback("使用者切換電台", {
+    from: currentStation?.id || null,
+    to: nextStation.id,
+    continuePlayback: shouldContinuePlayback
+  });
+
+  cancelReconnect("使用者切換電台");
+  cancelBufferingWatch("使用者切換電台");
+  invalidateActivePlayRequest();
+  retryCount = 0;
+  currentStation = nextStation;
+  updateStationUI(currentStation);
+
+  if (shouldContinuePlayback) {
+    setPlaybackState(PlaybackState.RECONNECTING);
+  } else {
+    setPlaybackState(PlaybackState.PAUSED);
+  }
+
+  try {
+    if (!radio.paused) {
+      radio.pause();
+    }
+
+    radioSource.src = currentStation.streamUrl;
+    radio.load();
+  } catch (error) {
+    console.warn("[Easy Radio] 切換電台失敗", {
+      name: error?.name || "UnknownError",
+      stationId: currentStation.id
+    });
+    notifyStationChange(currentStation);
+
+    if (shouldContinuePlayback) {
+      setPlaybackState(PlaybackState.ERROR);
+      scheduleReconnect("切換電台失敗");
+    }
+
+    return { changed: true, reason: "load-failed" };
+  }
+
+  notifyStationChange(currentStation);
+
+  if (shouldContinuePlayback) {
+    void attemptPlayback("station-change");
+  }
+
+  return {
+    changed: true,
+    reason: shouldContinuePlayback ? "continue-playback" : "remain-paused"
+  };
 }
 
 function usesDeviceVolumeControls() {
@@ -156,12 +256,10 @@ function syncVolumeUI() {
 
 function initializeVolumeControls() {
   if (usesDeviceVolumeControls()) {
-    volumeNote.hidden = false;
     desktopVolume.hidden = true;
     return;
   }
 
-  volumeNote.hidden = true;
   desktopVolume.hidden = false;
   radio.volume = 1;
   radio.muted = false;
@@ -617,6 +715,12 @@ window.addEventListener("online", () => {
   scheduleReconnect("網路恢復");
 });
 
+window.EasyRadioPlayer = Object.freeze({
+  getCurrentStation: () => currentStation,
+  selectStation
+});
+
+initializeCurrentStation();
 initializeVolumeControls();
 updateClock();
 updatePlaybackUI();

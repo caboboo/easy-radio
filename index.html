@@ -11,46 +11,46 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="programOverlay" class="program-overlay" aria-hidden="true"></div>
+  <div id="stationOverlay" class="station-overlay" aria-hidden="true"></div>
 
   <aside
-    id="programPanel"
-    class="program-panel"
+    id="stationPanel"
+    class="station-panel"
     role="dialog"
     aria-modal="true"
     aria-hidden="true"
-    aria-labelledby="programPanelTitle"
+    aria-labelledby="stationPanelTitle"
     inert
   >
-    <div class="program-panel-header">
-      <h2 id="programPanelTitle" tabindex="-1">
-        已收錄節目（<span id="programCount">0</span>）
+    <div class="station-panel-header">
+      <h2 id="stationPanelTitle" tabindex="-1">
+        選擇電台（<span id="stationCount">0</span>）
       </h2>
       <button
-        id="programCloseButton"
-        class="program-close-button"
+        id="stationCloseButton"
+        class="station-close-button"
         type="button"
-        aria-label="關閉節目選單"
+        aria-label="關閉電台選單"
       >
         關閉
       </button>
     </div>
 
-    <div class="program-search">
-      <label for="programSearch">搜尋節目</label>
-      <div class="program-search-controls">
+    <div class="station-search">
+      <label for="stationSearch">搜尋電台</label>
+      <div class="station-search-controls">
         <input
-          id="programSearch"
+          id="stationSearch"
           type="search"
-          placeholder="搜尋節目、主持人或電台"
-          aria-describedby="programSearchStatus"
+          placeholder="搜尋電台名稱或頻率"
+          aria-describedby="stationSearchStatus"
           autocomplete="off"
         >
         <button
-          id="programSearchClear"
-          class="program-search-clear"
+          id="stationSearchClear"
+          class="station-search-clear"
           type="button"
-          aria-label="清除節目搜尋"
+          aria-label="清除電台搜尋"
           hidden
         >
           清除
@@ -59,33 +59,28 @@
     </div>
 
     <p
-      id="programSearchStatus"
-      class="program-search-status"
+      id="stationSearchStatus"
+      class="station-search-status"
       aria-live="polite"
     >
-      共 0 筆節目
+      共 0 個電台
     </p>
-    <div id="programList" class="program-list" aria-label="節目列表"></div>
+    <div id="stationList" class="station-list" aria-label="電台列表"></div>
   </aside>
 
   <main class="app" aria-label="Easy Radio 網路廣播機">
     <header class="topbar">
       <button
-        id="programMenuButton"
-        class="program-menu-button"
+        id="stationMenuButton"
+        class="station-menu-button"
         type="button"
-        aria-label="開啟節目選單"
+        aria-label="開啟電台選單"
         aria-expanded="false"
-        aria-controls="programPanel"
+        aria-controls="stationPanel"
       >
         <span aria-hidden="true">☰</span>
-        <span>節目</span>
+        <span>電台</span>
       </button>
-
-      <div id="volumeNote" class="volume-note" aria-label="音量請使用手機側邊按鍵">
-        <span class="speaker" aria-hidden="true">🔊</span>
-        <span>音量請用手機側邊按鍵</span>
-      </div>
 
       <div class="clock">
         <div id="date">----/--/--</div>
@@ -97,17 +92,16 @@
       <div class="station-mark" aria-hidden="true">
         <strong>i</strong>
         <span>Radio</span>
-        <small>FM96.3</small>
+        <small id="stationFrequency"></small>
       </div>
 
       <div class="station-info">
-        <h1>中廣音樂網</h1>
-        <p class="frequency">i Radio FM96.3</p>
+        <h1 id="stationName"></h1>
+        <p id="stationSubtitle" class="frequency"></p>
 
         <p id="song" class="song">目前曲目：電台未提供</p>
 
-        <div id="status" class="status" role="status" aria-live="polite">
-          <span class="status-dot"></span>
+        <div class="visually-hidden" role="status" aria-live="polite">
           <span id="statusText">準備播放</span>
         </div>
 
@@ -140,17 +134,17 @@
 
     <footer class="footer">
       <span>Easy Radio</span>
-      <span>v0.3.2</span>
+      <span>v0.3.3</span>
     </footer>
 
     <audio id="radio" preload="none" playsinline>
-      <source src="https://stream.rcs.revma.com/ndk05tyy2tzuv" type="audio/mpeg">
+      <source id="radioSource" type="audio/mpeg">
     </audio>
   </main>
 
+  <script src="stations-data.js"></script>
+  <script src="station-search.js"></script>
   <script src="script.js"></script>
-  <script src="programs-data.js"></script>
-  <script src="program-search.js"></script>
-  <script src="program-menu.js"></script>
+  <script src="station-menu.js"></script>
 </body>
 </html>

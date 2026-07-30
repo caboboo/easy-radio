@@ -1,15 +1,15 @@
-(function exposeProgramSearch(root, createSearch) {
+(function exposeStationSearch(root, createSearch) {
   "use strict";
 
   const search = createSearch();
-  root.EasyRadioProgramSearch = search;
+  root.EasyRadioStationSearch = search;
 
   if (typeof module === "object" && module.exports) {
     module.exports = search;
   }
 })(
   typeof globalThis === "object" ? globalThis : window,
-  function createProgramSearch() {
+  function createStationSearch() {
     "use strict";
 
     function normalizeText(value) {
@@ -30,36 +30,34 @@
         : [value];
     }
 
-    function getSearchText(program) {
-      if (!program || typeof program !== "object") {
+    function getSearchText(station) {
+      if (!station || typeof station !== "object") {
         return "";
       }
 
       return [
-        program.title,
-        program.stationName,
-        ...normalizeList(program.hosts),
-        ...normalizeList(program.keywords),
-        program.description,
-        program.scheduleText
+        station.name,
+        station.subtitle,
+        station.frequency,
+        ...normalizeList(station.keywords)
       ]
         .map(normalizeText)
         .join(" ");
     }
 
-    function filterPrograms(programs, query) {
-      const source = Array.isArray(programs) ? programs : [];
+    function filterStations(stations, query) {
+      const source = Array.isArray(stations) ? stations : [];
       const normalizedQuery = normalizeText(query);
 
       if (!normalizedQuery) {
         return source.slice();
       }
 
-      return source.filter((program) =>
-        getSearchText(program).includes(normalizedQuery)
+      return source.filter((station) =>
+        getSearchText(station).includes(normalizedQuery)
       );
     }
 
-    return Object.freeze({ filterPrograms });
+    return Object.freeze({ filterStations });
   }
 );
