@@ -1,13 +1,22 @@
-# Easy Radio v0.3.3
+# Easy Radio
 
-Easy Radio 是一個在 iPhone Safari 與電腦瀏覽器播放「中廣音樂網 i Radio FM96.3」的長輩友善靜態網站。
+Easy Radio 是一個在 iPhone Safari 與電腦瀏覽器播放中廣電台的長輩友善靜態網站。
 
-v0.3.0 加入保守的受控斷線恢復：短暫緩衝會先交由瀏覽器自行恢復，持續失敗才逐步延長間隔重新連線。
+播放器包含保守的受控斷線恢復：短暫緩衝會先交由瀏覽器自行恢復，持續失敗才逐步延長間隔重新連線。
 使用者主動暫停後，系統會取消所有重連安排，不會自行恢復播放。
+
+## Version 與 Build
+
+Version 代表產品版本，由 Project Owner 決定。
+
+Build 代表 GitHub Pages 部署次數，每次正式 Commit + Push 都會增加。
+
+目前的 Version 與 Build Number 集中保存在 `version.js`。除非 Project Owner 明確要求升版，否則 Version 保持不變；每次完成一輪修改並準備正式部署時才將 Build Number 加 1，未 Push 的修改不算新 Build。現在是 `Version v0.3`、`Build 001`。
 
 ## 檔案
 
 - `index.html`：網頁的結構與內容
+- `version.js`：產品 Version 與部署 Build Number
 - `style.css`：畫面外觀與橫直式排版
 - `script.js`：播放按鈕、狀態與日期時間
 - `stations-data.js`：已確認的電台與串流資料
@@ -16,9 +25,12 @@ v0.3.0 加入保守的受控斷線恢復：短暫緩衝會先交由瀏覽器自�
 
 ## 電台選單
 
-按頁面上方的「電台」即可開啟選單，輸入文字後會立即搜尋電台名稱、副標題、頻率與關鍵字。目前已收錄「中廣音樂網 i Radio FM96.3」。
+按頁面上方的「電台」即可開啟選單，輸入文字後會立即搜尋電台名稱、副標題、頻率與關鍵字。目前收錄：
 
-新增電台時，請在 `stations-data.js` 的 `stations` 陣列加入一筆物件，填入唯一的 `id`、`name`、`streamUrl`，並可加入 `subtitle`、`frequency` 與 `keywords`。`streamUrl` 必須是已確認可以播放的正式串流，不得填入猜測或未確認的網址。
+- 中廣音樂網 i Radio FM96.3
+- 中廣流行網 i like radio FM103.3
+
+新增電台時，請在 `stations-data.js` 的 `stations` 陣列加入一筆物件，填入唯一的 `id`、`name`、`brand`、`streamUrl`，並可加入 `subtitle`、`frequency` 與 `keywords`。`streamUrl` 必須是已確認可播放的 HTTPS 正式入口；不得填入猜測、第三方、HTTP 或 redirect 後含 `rj-tok`／`rj-ttl` 的短效網址。
 
 使用者正在播放時切換電台，播放器會使用同一個 `<audio>` 元素嘗試繼續播放；使用者已暫停時切換電台，仍會維持暫停。點選目前電台只會關閉選單，不會重新載入串流。
 

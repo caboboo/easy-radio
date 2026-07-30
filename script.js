@@ -13,9 +13,15 @@ const muteButton = document.getElementById("muteButton");
 const stationNameElement = document.getElementById("stationName");
 const stationSubtitleElement = document.getElementById("stationSubtitle");
 const stationFrequencyElement = document.getElementById("stationFrequency");
+const stationBrandLeadElement = document.getElementById("stationBrandLead");
+const stationBrandTextElement = document.getElementById("stationBrandText");
+const stationMarkElement = document.querySelector(".station-mark");
+const versionTextElement = document.getElementById("versionText");
+const buildTextElement = document.getElementById("buildText");
 const stations = Array.isArray(window.EASY_RADIO_STATIONS)
   ? window.EASY_RADIO_STATIONS
   : [];
+const releaseInfo = window.EASY_RADIO_VERSION;
 
 const PlaybackState = Object.freeze({
   READY: "ready",
@@ -70,6 +76,23 @@ function updateClock() {
   if (timeElement.textContent !== nextTime) {
     timeElement.textContent = nextTime;
   }
+}
+
+function initializeVersionDisplay() {
+  const version = releaseInfo?.version;
+  const build = releaseInfo?.build;
+
+  if (
+    typeof version !== "string" ||
+    !Number.isInteger(build) ||
+    build < 1
+  ) {
+    console.warn("[Easy Radio] 無法讀取有效的 Version／Build 資訊");
+    return;
+  }
+
+  versionTextElement.textContent = `Version ${version}`;
+  buildTextElement.textContent = `Build ${String(build).padStart(3, "0")}`;
 }
 
 const playbackUI = {
@@ -129,14 +152,24 @@ function setPlaybackState(nextState) {
 }
 
 function updateStationUI(station) {
+  const brand = station?.brand ? String(station.brand).trim() : "";
   const subtitle = station?.subtitle ? String(station.subtitle).trim() : "";
   const frequency = station?.frequency ? String(station.frequency).trim() : "";
+  const [brandLead = "", ...brandTextParts] = brand.split(/\s+/);
+  const brandText = brandTextParts.join(" ");
+  const showFrequencyInMark =
+    Boolean(frequency) && !subtitle.includes(frequency);
 
   stationNameElement.textContent = station?.name || "";
+  stationBrandLeadElement.textContent = brandLead;
+  stationBrandLeadElement.hidden = !brandLead;
+  stationBrandTextElement.textContent = brandText;
+  stationBrandTextElement.hidden = !brandText;
+  stationMarkElement.classList.toggle("has-long-brand", brandText.length > 7);
   stationSubtitleElement.textContent = subtitle;
   stationSubtitleElement.hidden = !subtitle;
-  stationFrequencyElement.textContent = frequency;
-  stationFrequencyElement.hidden = !frequency;
+  stationFrequencyElement.textContent = showFrequencyInMark ? frequency : "";
+  stationFrequencyElement.hidden = !showFrequencyInMark;
 }
 
 function initializeCurrentStation() {
@@ -722,6 +755,7 @@ window.EasyRadioPlayer = Object.freeze({
 
 initializeCurrentStation();
 initializeVolumeControls();
+initializeVersionDisplay();
 updateClock();
 updatePlaybackUI();
 

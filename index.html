@@ -90,8 +90,8 @@
 
     <section class="player-card">
       <div class="station-mark" aria-hidden="true">
-        <strong>i</strong>
-        <span>Radio</span>
+        <strong id="stationBrandLead"></strong>
+        <span id="stationBrandText"></span>
         <small id="stationFrequency"></small>
       </div>
 
@@ -133,8 +133,8 @@
     </section>
 
     <footer class="footer">
-      <span>Easy Radio</span>
-      <span>v0.3.3</span>
+      <span id="versionText"></span>
+      <span id="buildText"></span>
     </footer>
 
     <audio id="radio" preload="none" playsinline>
@@ -142,6 +142,7 @@
     </audio>
   </main>
 
+  <script src="version.js"></script>
   <script src="stations-data.js"></script>
   <script src="station-search.js"></script>
   <script src="script.js"></script>
