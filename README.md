@@ -1,4 +1,4 @@
-# Easy Radio v0.3.0
+# Easy Radio v0.3.1
 
 Easy Radio 是一個在 iPhone Safari 與電腦瀏覽器播放「中廣音樂網 i Radio FM96.3」的長輩友善靜態網站。
 

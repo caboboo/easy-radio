@@ -424,6 +424,113 @@ button {
   }
 }
 
+@media (max-width: 480px) and (orientation: portrait) {
+  .app {
+    gap: 8px;
+    padding:
+      max(8px, env(safe-area-inset-top))
+      max(8px, env(safe-area-inset-right))
+      max(18px, env(safe-area-inset-bottom))
+      max(8px, env(safe-area-inset-left));
+  }
+
+  .topbar {
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px;
+    border-radius: 14px;
+  }
+
+  .volume-note {
+    gap: 6px;
+    font-size: clamp(14px, 3.8vw, 17px);
+    line-height: 1.15;
+  }
+
+  .speaker {
+    font-size: 1.2em;
+  }
+
+  .clock {
+    min-width: 120px;
+    padding: 3px 5px;
+    border-radius: 12px;
+  }
+
+  #date {
+    font-size: clamp(12px, 3.4vw, 15px);
+    white-space: nowrap;
+  }
+
+  #time {
+    font-size: clamp(27px, 7.6vw, 32px);
+  }
+
+  .player-card {
+    align-self: start;
+    gap: 6px;
+    padding: 10px;
+    border-radius: 18px;
+  }
+
+  .station-mark {
+    width: clamp(108px, 30vw, 132px);
+    border-radius: 16px;
+  }
+
+  .station-mark strong {
+    font-size: clamp(68px, 20vw, 82px);
+  }
+
+  .station-mark span {
+    font-size: clamp(22px, 6vw, 26px);
+  }
+
+  .station-mark small {
+    font-size: clamp(16px, 4.2vw, 18px);
+  }
+
+  .station-info h1 {
+    font-size: clamp(32px, 8.5vw, 36px);
+  }
+
+  .frequency {
+    margin: 2px 0 6px;
+    font-size: clamp(21px, 5.8vw, 25px);
+  }
+
+  .song {
+    min-height: 1.25em;
+    margin-bottom: 4px;
+    font-size: clamp(16px, 4.3vw, 19px);
+  }
+
+  .status {
+    gap: 8px;
+    min-height: 1.25em;
+    margin-bottom: 6px;
+    font-size: clamp(18px, 4.8vw, 21px);
+  }
+
+  .playback-controls {
+    gap: 6px;
+    padding: 6px;
+    border-radius: 18px;
+  }
+
+  .play-button {
+    min-height: clamp(88px, 14dvh, 104px);
+    gap: 14px;
+    border-bottom-width: 5px;
+    border-radius: 18px;
+    font-size: clamp(34px, 9vw, 39px);
+  }
+
+  .footer {
+    font-size: 13px;
+  }
+}
+
 @media (max-height: 500px) and (orientation: landscape) {
   .app {
     gap: 8px;
@@ -455,6 +562,112 @@ button {
 
   .footer {
     display: none;
+  }
+}
+
+@media (max-width: 900px) and (max-height: 500px) and (orientation: landscape) {
+  .app {
+    gap: 4px;
+    padding:
+      max(4px, env(safe-area-inset-top))
+      max(8px, env(safe-area-inset-right))
+      max(8px, env(safe-area-inset-bottom))
+      max(8px, env(safe-area-inset-left));
+  }
+
+  .topbar {
+    gap: 8px;
+    padding: 3px 8px;
+    border-radius: 12px;
+  }
+
+  .volume-note {
+    gap: 6px;
+    font-size: 14px;
+    line-height: 1.1;
+    white-space: nowrap;
+  }
+
+  .speaker {
+    font-size: 1.1em;
+  }
+
+  .clock {
+    min-width: 120px;
+    padding: 2px 6px;
+    border-radius: 10px;
+  }
+
+  #date {
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  #time {
+    font-size: 26px;
+  }
+
+  .player-card {
+    align-self: start;
+    grid-template-columns: minmax(86px, 22%) 1fr;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 16px;
+  }
+
+  .station-mark {
+    width: 86px;
+    width: clamp(86px, 25svh, 110px);
+    justify-self: center;
+    border-radius: 14px;
+  }
+
+  .station-mark strong {
+    font-size: clamp(56px, 17svh, 68px);
+  }
+
+  .station-mark span {
+    font-size: clamp(19px, 5.5svh, 22px);
+  }
+
+  .station-mark small {
+    font-size: clamp(14px, 4svh, 16px);
+  }
+
+  .station-info h1 {
+    font-size: clamp(28px, 8svh, 32px);
+  }
+
+  .frequency {
+    margin: 1px 0 3px;
+    font-size: clamp(20px, 5.8svh, 23px);
+  }
+
+  .song {
+    min-height: 1.2em;
+    margin-bottom: 3px;
+    font-size: clamp(15px, 4.5svh, 18px);
+  }
+
+  .status {
+    gap: 6px;
+    min-height: 1.2em;
+    margin-bottom: 4px;
+    font-size: clamp(17px, 5svh, 20px);
+  }
+
+  .playback-controls {
+    gap: 4px;
+    padding: 4px;
+    border-radius: 14px;
+  }
+
+  .play-button {
+    min-height: 70px;
+    gap: 10px;
+    border-bottom-width: 4px;
+    border-radius: 14px;
+    font-size: clamp(27px, 8svh, 31px);
   }
 }
 
