@@ -13,31 +13,6 @@
 <body>
   <main class="app" aria-label="Easy Radio 網路廣播機">
     <header class="topbar">
-      <div class="playback-controls shared-playback-controls">
-        <button id="playButton" class="play-button" type="button" aria-pressed="false">
-          <span id="playIcon" class="play-icon" aria-hidden="true">▶</span>
-          <span id="playText">播放</span>
-        </button>
-
-        <div id="desktopVolume" class="desktop-volume" hidden>
-          <label class="volume-control" for="volumeSlider">
-            <span id="volumeText">音量 100%</span>
-            <input
-              id="volumeSlider"
-              class="volume-slider"
-              type="range"
-              min="0"
-              max="100"
-              step="1"
-              value="100"
-            >
-          </label>
-          <button id="muteButton" class="mute-button" type="button" aria-pressed="false">
-            靜音
-          </button>
-        </div>
-      </div>
-
       <div class="clock">
         <div id="date">----/--/--</div>
         <div id="time">--:--</div>
@@ -120,6 +95,31 @@
       <span id="versionText"></span>
       <span id="buildText"></span>
     </footer>
+
+    <div class="playback-controls shared-playback-controls floating-playback-bar">
+      <button id="playButton" class="play-button" type="button" aria-pressed="false">
+        <span id="playIcon" class="play-icon" aria-hidden="true">▶</span>
+        <span id="playText">播放</span>
+      </button>
+
+      <div id="desktopVolume" class="desktop-volume" hidden>
+        <label class="volume-control" for="volumeSlider">
+          <span id="volumeText">音量 100%</span>
+          <input
+            id="volumeSlider"
+            class="volume-slider"
+            type="range"
+            min="0"
+            max="100"
+            step="1"
+            value="100"
+          >
+        </label>
+        <button id="muteButton" class="mute-button" type="button" aria-pressed="false">
+          靜音
+        </button>
+      </div>
+    </div>
 
     <audio id="radio" preload="none" playsinline>
       <source id="radioSource" type="audio/mpeg">

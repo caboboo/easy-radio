@@ -25,32 +25,36 @@ test("the page defaults to a single-player view with a valid mode toggle", () =>
   assert.match(html, /id="stationListTitle">選擇電台<\/h1>/);
 });
 
-test("one control set stays in the topbar while the mode button is in content", () => {
+test("one control set floats at page bottom outside both views", () => {
   const topbar = html.match(/<header class="topbar">([\s\S]*?)<\/header>/)?.[1] || "";
-  const mainContent = html.match(/<div class="main-content">([\s\S]*?)<footer/)?.[1] || "";
+  const floatingBar = html.match(
+    /<div class="playback-controls shared-playback-controls floating-playback-bar">[\s\S]*?(?=<audio id="radio")/
+  )?.[0] || "";
   const playerView = html.match(/<section id="playerView"[\s\S]*?<\/section>/)?.[0] || "";
+  const listView = html.match(/<section[\s\S]*?id="stationListView"[\s\S]*?<\/section>/)?.[0] || "";
 
-  assert.match(topbar, /class="playback-controls shared-playback-controls"/);
-  assert.match(topbar, /id="playButton"/);
-  assert.match(topbar, /id="volumeSlider"/);
-  assert.match(topbar, /id="muteButton"/);
-  assert.doesNotMatch(topbar, /id="viewToggleButton"/);
-  assert.match(mainContent, /id="viewToggleButton"[\s\S]*?id="stationListView"/);
-  assert.doesNotMatch(playerView, /playButton|volumeSlider|muteButton|viewToggleButton/);
-  assert.equal((html.match(/id="viewToggleButton"/g) || []).length, 1);
+  assert.doesNotMatch(topbar, /playButton|volumeSlider|muteButton/);
+  assert.match(topbar, /class="clock"/);
+  assert.match(floatingBar, /id="playButton"/);
+  assert.match(floatingBar, /id="volumeSlider"/);
+  assert.match(floatingBar, /id="muteButton"/);
+  assert.doesNotMatch(playerView, /playButton|volumeSlider|muteButton/);
+  assert.doesNotMatch(listView, /playButton|volumeSlider|muteButton/);
   assert.equal((html.match(/id="playButton"/g) || []).length, 1);
   assert.equal((html.match(/id="volumeSlider"/g) || []).length, 1);
   assert.equal((html.match(/id="muteButton"/g) || []).length, 1);
-  assert.ok(
-    topbar.indexOf('class="playback-controls shared-playback-controls"') <
-      topbar.indexOf('class="clock"')
-  );
-  assert.match(styles, /\.main-content\s*\{[\s\S]*?display: grid/);
-  assert.match(styles, /grid-template-columns:\s*minmax\(0, 760px\)[^;]+;/);
+  assert.equal((html.match(/<audio\b/g) || []).length, 1);
+  assert.ok(html.indexOf('<footer class="footer">') < html.indexOf('floating-playback-bar'));
+  assert.ok(html.indexOf('floating-playback-bar') < html.indexOf('<audio id="radio"'));
   assert.match(
     styles,
-    /\.shared-playback-controls\s*\{[\s\S]*?grid-column: 1;[\s\S]*?grid-row: 1;/
+    /\.floating-playback-bar\s*\{[\s\S]*?position: fixed;[\s\S]*?bottom: calc\(12px \+ env\(safe-area-inset-bottom\)\);[\s\S]*?max-width: 880px;/
   );
+  assert.match(
+    styles,
+    /\.app\s*\{[\s\S]*?calc\(128px \+ env\(safe-area-inset-bottom\)\)/
+  );
+  assert.doesNotMatch(styles, /\.footer\s*\{\s*display: none;/);
 });
 
 test("an empty song stays available but takes no visible space", () => {
