@@ -23,9 +23,7 @@
     inert
   >
     <div class="station-panel-header">
-      <h2 id="stationPanelTitle" tabindex="-1">
-        選擇電台（<span id="stationCount">0</span>）
-      </h2>
+      <h2 id="stationPanelTitle" tabindex="-1">選擇電台</h2>
       <button
         id="stationCloseButton"
         class="station-close-button"
@@ -36,7 +34,7 @@
       </button>
     </div>
 
-    <div class="station-search">
+    <div id="stationSearchSection" class="station-search" hidden>
       <label for="stationSearch">搜尋電台</label>
       <div class="station-search-controls">
         <input
@@ -62,6 +60,7 @@
       id="stationSearchStatus"
       class="station-search-status"
       aria-live="polite"
+      hidden
     >
       共 0 個電台
     </p>

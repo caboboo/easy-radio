@@ -58,6 +58,15 @@
       );
     }
 
-    return Object.freeze({ filterStations });
+    function shouldShowStationSearch(stations, minimumStationCount = 6) {
+      const source = Array.isArray(stations) ? stations : [];
+      const threshold = Number.isInteger(minimumStationCount)
+        ? minimumStationCount
+        : 6;
+
+      return source.length >= threshold;
+    }
+
+    return Object.freeze({ filterStations, shouldShowStationSearch });
   }
 );

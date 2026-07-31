@@ -11,7 +11,7 @@ Version 代表產品版本，由 Project Owner 決定。
 
 Build 代表 GitHub Pages 部署次數，每次正式 Commit + Push 都會增加。
 
-目前的 Version 與 Build Number 集中保存在 `version.js`。除非 Project Owner 明確要求升版，否則 Version 保持不變；每次完成一輪修改並準備正式部署時才將 Build Number 加 1，未 Push 的修改不算新 Build。現在是 `Version v0.3`、`Build 001`。
+目前的 Version 與 Build Number 集中保存在 `version.js`。除非 Project Owner 明確要求升版，否則 Version 保持不變；每次完成一輪修改並準備正式部署時才將 Build Number 加 1，未 Push 的修改不算新 Build。現在是 `Version v0.3`、`Build 002`。
 
 ## 檔案
 
@@ -25,7 +25,7 @@ Build 代表 GitHub Pages 部署次數，每次正式 Commit + Push 都會增加
 
 ## 電台選單
 
-按頁面上方的「電台」即可開啟選單，輸入文字後會立即搜尋電台名稱、副標題、頻率與關鍵字。目前收錄：
+按頁面上方的「電台」即可開啟選單，整張電台卡片都能使用滑鼠、觸控或鍵盤直接切台，不需要另外顯示「切換電台」按鈕。目前電台以「✓ 目前電台」文字標記。電台少於 6 個時會隱藏搜尋區，達到 6 個以上時才自動顯示電台名稱、副標題、頻率與關鍵字搜尋。目前收錄：
 
 - 中廣音樂網 i Radio FM96.3
 - 中廣流行網 i like radio FM103.3

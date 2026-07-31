@@ -1,6 +1,9 @@
 const assert = require("node:assert/strict");
 const stations = require("../stations-data.js");
-const { filterStations } = require("../station-search.js");
+const {
+  filterStations,
+  shouldShowStationSearch
+} = require("../station-search.js");
 
 const testStations = [
   {
@@ -25,6 +28,12 @@ const testStations = [
 ];
 
 const originalSnapshot = JSON.stringify(testStations);
+
+assert.equal(shouldShowStationSearch(stations), false);
+assert.equal(shouldShowStationSearch(Array(5).fill(null)), false);
+assert.equal(shouldShowStationSearch(Array(6).fill(null)), true);
+assert.equal(shouldShowStationSearch(Array(7).fill(null)), true);
+assert.equal(shouldShowStationSearch(null), false);
 
 assert.deepEqual(filterStations(testStations, ""), testStations);
 assert.deepEqual(filterStations(testStations, "   "), testStations);

@@ -6,7 +6,7 @@
   const overlay = document.getElementById("stationOverlay");
   const closeButton = document.getElementById("stationCloseButton");
   const panelTitle = document.getElementById("stationPanelTitle");
-  const stationCount = document.getElementById("stationCount");
+  const searchSection = document.getElementById("stationSearchSection");
   const searchInput = document.getElementById("stationSearch");
   const clearButton = document.getElementById("stationSearchClear");
   const searchStatus = document.getElementById("stationSearchStatus");
@@ -16,6 +16,8 @@
     ? window.EASY_RADIO_STATIONS
     : [];
   const filterStations = window.EasyRadioStationSearch?.filterStations;
+  const shouldShowStationSearch =
+    window.EasyRadioStationSearch?.shouldShowStationSearch;
   const player = window.EasyRadioPlayer;
   let pageScrollY = 0;
   let isOpen = false;
@@ -26,13 +28,14 @@
     !overlay ||
     !closeButton ||
     !panelTitle ||
-    !stationCount ||
+    !searchSection ||
     !searchInput ||
     !clearButton ||
     !searchStatus ||
     !stationList ||
     !app ||
     typeof filterStations !== "function" ||
+    typeof shouldShowStationSearch !== "function" ||
     typeof player?.getCurrentStation !== "function" ||
     typeof player?.selectStation !== "function"
   ) {
@@ -66,6 +69,11 @@
   }
 
   const stations = getRenderableStations(sourceStations);
+  const isSearchAvailable = shouldShowStationSearch(stations);
+
+  searchSection.hidden = !isSearchAvailable;
+  searchStatus.hidden = !isSearchAvailable;
+  panel.classList.toggle("has-search", isSearchAvailable);
 
   function appendText(parent, tagName, className, text) {
     const cleanValue = cleanText(text);
@@ -80,57 +88,67 @@
     parent.append(element);
   }
 
+  function getStationMetaText(station) {
+    const brand = cleanText(station?.brand);
+    const frequency = cleanText(station?.frequency);
+    const subtitle = cleanText(station?.subtitle);
+
+    if (brand && frequency) {
+      return `${brand} · ${frequency}`;
+    }
+
+    return subtitle || brand || frequency;
+  }
+
   function createStationOption(station) {
     const currentStation = player.getCurrentStation();
     const isCurrent = currentStation?.id === station.id;
     const option = document.createElement("button");
-    const summary = document.createElement("span");
-    const badges = document.createElement("span");
+    const heading = document.createElement("span");
 
     option.className = "station-option";
     option.type = "button";
     option.dataset.stationId = station.id;
     option.setAttribute("aria-pressed", String(isCurrent));
 
-    summary.className = "station-option-text";
-    appendText(summary, "strong", "station-option-name", station.name);
-    appendText(summary, "span", "station-option-subtitle", station.subtitle);
+    heading.className = "station-option-heading";
+    appendText(heading, "strong", "station-option-name", station.name);
 
-    if (
-      station.frequency &&
-      !cleanText(station.subtitle).includes(cleanText(station.frequency))
-    ) {
+    if (isCurrent) {
       appendText(
-        summary,
+        heading,
         "span",
-        "station-option-frequency",
-        station.frequency
+        "current-station-label",
+        "✓ 目前電台"
       );
     }
 
-    badges.className = "station-option-badges";
-    appendText(badges, "span", "station-type-label", "電台");
+    option.append(heading);
     appendText(
-      badges,
+      option,
       "span",
-      isCurrent ? "current-station-label" : "station-action-label",
-      isCurrent ? "目前播放" : "切換電台"
+      "station-option-subtitle",
+      getStationMetaText(station)
     );
 
-    option.append(summary, badges);
     return option;
   }
 
   function renderStations() {
-    const rawQuery = searchInput.value;
+    const rawQuery = isSearchAvailable ? searchInput.value : "";
     const query = rawQuery.trim();
     const filteredStations = filterStations(stations, query);
 
-    clearButton.hidden = rawQuery.length === 0;
-    stationCount.textContent = String(stations.length);
-    searchStatus.textContent = query
-      ? `搜尋結果 ${filteredStations.length} 個電台`
-      : `共 ${stations.length} 個電台`;
+    if (!isSearchAvailable) {
+      searchInput.value = "";
+    }
+
+    clearButton.hidden = !isSearchAvailable || rawQuery.length === 0;
+    searchStatus.textContent = isSearchAvailable
+      ? query
+        ? `搜尋結果 ${filteredStations.length} 個電台`
+        : `共 ${stations.length} 個電台`
+      : "";
     stationList.replaceChildren();
 
     if (stations.length === 0) {
@@ -185,7 +203,12 @@
     menuButton.setAttribute("aria-expanded", "true");
     overlay.classList.add("is-open");
     panel.classList.add("is-open");
-    searchInput.focus();
+
+    if (isSearchAvailable) {
+      searchInput.focus();
+    } else {
+      closeButton.focus();
+    }
   }
 
   function closeMenu({ returnFocus = true } = {}) {
