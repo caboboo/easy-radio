@@ -201,7 +201,8 @@
 
     if (showList) {
       renderStations();
-      listTitle.focus();
+      const firstStation = stationList.querySelector(".station-option");
+      (firstStation || toggleButton).focus();
     } else if (focusToggle) {
       toggleButton.focus();
     }

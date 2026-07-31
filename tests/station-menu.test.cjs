@@ -22,31 +22,41 @@ test("the page defaults to a single-player view with a valid mode toggle", () =>
     html,
     /id="stationListView"[\s\S]*?aria-labelledby="stationListTitle"[\s\S]*?hidden/
   );
-  assert.match(html, /id="stationListTitle" tabindex="-1">選擇電台<\/h1>/);
+  assert.match(html, /id="stationListTitle">選擇電台<\/h1>/);
 });
 
-test("one shared control set stays in the topbar across both views", () => {
+test("one control set stays in the topbar while the mode button is in content", () => {
   const topbar = html.match(/<header class="topbar">([\s\S]*?)<\/header>/)?.[1] || "";
+  const mainContent = html.match(/<div class="main-content">([\s\S]*?)<footer/)?.[1] || "";
   const playerView = html.match(/<section id="playerView"[\s\S]*?<\/section>/)?.[0] || "";
 
   assert.match(topbar, /class="playback-controls shared-playback-controls"/);
   assert.match(topbar, /id="playButton"/);
   assert.match(topbar, /id="volumeSlider"/);
   assert.match(topbar, /id="muteButton"/);
-  assert.doesNotMatch(playerView, /playButton|volumeSlider|muteButton/);
+  assert.doesNotMatch(topbar, /id="viewToggleButton"/);
+  assert.match(mainContent, /id="viewToggleButton"[\s\S]*?id="stationListView"/);
+  assert.doesNotMatch(playerView, /playButton|volumeSlider|muteButton|viewToggleButton/);
+  assert.equal((html.match(/id="viewToggleButton"/g) || []).length, 1);
   assert.equal((html.match(/id="playButton"/g) || []).length, 1);
   assert.equal((html.match(/id="volumeSlider"/g) || []).length, 1);
   assert.equal((html.match(/id="muteButton"/g) || []).length, 1);
   assert.ok(
-    topbar.indexOf('id="viewToggleButton"') <
-      topbar.indexOf('class="playback-controls shared-playback-controls"')
-  );
-  assert.ok(
     topbar.indexOf('class="playback-controls shared-playback-controls"') <
       topbar.indexOf('class="clock"')
   );
-  assert.match(styles, /grid-template-columns:\s*minmax\(150px, 1fr\)[^;]+;/);
-  assert.match(styles, /\.shared-playback-controls[\s\S]*?grid-column: 1 \/ -1/);
+  assert.match(styles, /\.main-content\s*\{[\s\S]*?display: grid/);
+  assert.match(styles, /grid-template-columns:\s*minmax\(0, 760px\)[^;]+;/);
+  assert.match(
+    styles,
+    /\.shared-playback-controls\s*\{[\s\S]*?grid-column: 1;[\s\S]*?grid-row: 1;/
+  );
+});
+
+test("an empty song stays available but takes no visible space", () => {
+  assert.match(html, /<p id="song" class="song" hidden><\/p>/);
+  assert.doesNotMatch(html, /目前曲目：電台未提供|電台未提供/);
+  assert.match(styles, /\[hidden\]\s*\{[\s\S]*?display: none !important/);
 });
 
 test("the former drawer, overlay, close button, and scroll lock are removed", () => {
@@ -70,6 +80,9 @@ test("view state switches content and labels without controlling audio", () => {
   assert.match(viewScript, /let displayMode = DisplayMode\.SINGLE/);
   assert.match(viewScript, /playerView\.hidden = showList/);
   assert.match(viewScript, /listView\.hidden = !showList/);
+
+  assert.match(viewScript, /stationList\.querySelector\("\.station-option"\)/);
+  assert.doesNotMatch(viewScript, /listTitle\.focus\(\)/);
   assert.match(viewScript, /showList \? "返回播放" : "所有電台"/);
   assert.match(viewScript, /event\.key !== "Escape"/);
   assert.doesNotMatch(
