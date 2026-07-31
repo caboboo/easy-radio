@@ -25,6 +25,31 @@
         <span id="viewToggleText">所有電台</span>
       </button>
 
+      <div class="playback-controls shared-playback-controls">
+        <button id="playButton" class="play-button" type="button" aria-pressed="false">
+          <span id="playIcon" class="play-icon" aria-hidden="true">▶</span>
+          <span id="playText">播放</span>
+        </button>
+
+        <div id="desktopVolume" class="desktop-volume" hidden>
+          <label class="volume-control" for="volumeSlider">
+            <span id="volumeText">音量 100%</span>
+            <input
+              id="volumeSlider"
+              class="volume-slider"
+              type="range"
+              min="0"
+              max="100"
+              step="1"
+              value="100"
+            >
+          </label>
+          <button id="muteButton" class="mute-button" type="button" aria-pressed="false">
+            靜音
+          </button>
+        </div>
+      </div>
+
       <div class="clock">
         <div id="date">----/--/--</div>
         <div id="time">--:--</div>
@@ -85,31 +110,6 @@
 
         <div class="visually-hidden" role="status" aria-live="polite">
           <span id="statusText">準備播放</span>
-        </div>
-
-        <div class="playback-controls">
-          <button id="playButton" class="play-button" type="button" aria-pressed="false">
-            <span id="playIcon" class="play-icon" aria-hidden="true">▶</span>
-            <span id="playText">播放</span>
-          </button>
-
-          <div id="desktopVolume" class="desktop-volume" hidden>
-            <label class="volume-control" for="volumeSlider">
-              <span id="volumeText">音量 100%</span>
-              <input
-                id="volumeSlider"
-                class="volume-slider"
-                type="range"
-                min="0"
-                max="100"
-                step="1"
-                value="100"
-              >
-            </label>
-            <button id="muteButton" class="mute-button" type="button" aria-pressed="false">
-              靜音
-            </button>
-          </div>
         </div>
       </div>
     </section>

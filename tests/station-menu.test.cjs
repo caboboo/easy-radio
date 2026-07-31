@@ -25,6 +25,30 @@ test("the page defaults to a single-player view with a valid mode toggle", () =>
   assert.match(html, /id="stationListTitle" tabindex="-1">選擇電台<\/h1>/);
 });
 
+test("one shared control set stays in the topbar across both views", () => {
+  const topbar = html.match(/<header class="topbar">([\s\S]*?)<\/header>/)?.[1] || "";
+  const playerView = html.match(/<section id="playerView"[\s\S]*?<\/section>/)?.[0] || "";
+
+  assert.match(topbar, /class="playback-controls shared-playback-controls"/);
+  assert.match(topbar, /id="playButton"/);
+  assert.match(topbar, /id="volumeSlider"/);
+  assert.match(topbar, /id="muteButton"/);
+  assert.doesNotMatch(playerView, /playButton|volumeSlider|muteButton/);
+  assert.equal((html.match(/id="playButton"/g) || []).length, 1);
+  assert.equal((html.match(/id="volumeSlider"/g) || []).length, 1);
+  assert.equal((html.match(/id="muteButton"/g) || []).length, 1);
+  assert.ok(
+    topbar.indexOf('id="viewToggleButton"') <
+      topbar.indexOf('class="playback-controls shared-playback-controls"')
+  );
+  assert.ok(
+    topbar.indexOf('class="playback-controls shared-playback-controls"') <
+      topbar.indexOf('class="clock"')
+  );
+  assert.match(styles, /grid-template-columns:\s*minmax\(150px, 1fr\)[^;]+;/);
+  assert.match(styles, /\.shared-playback-controls[\s\S]*?grid-column: 1 \/ -1/);
+});
+
 test("the former drawer, overlay, close button, and scroll lock are removed", () => {
   assert.doesNotMatch(
     html,
@@ -54,7 +78,11 @@ test("view state switches content and labels without controlling audio", () => {
   );
 });
 
-test("station cards remain one accessible button and selection returns to player", () => {
+test("station cards remain accessible and selection stays in the list view", () => {
+  const selectionHandler = viewScript.match(
+    /function handleStationListClick\(event\) \{([\s\S]*?)\n  \}/
+  )?.[1] || "";
+
   assert.match(viewScript, /document\.createElement\("button"\)/);
   assert.match(viewScript, /option\.type = "button"/);
   assert.match(
@@ -62,11 +90,9 @@ test("station cards remain one accessible button and selection returns to player
     /option\.setAttribute\("aria-pressed", String\(isCurrent\)\)/
   );
   assert.match(viewScript, /"✓ 目前電台"/);
-  assert.match(viewScript, /player\.selectStation\(stationId\)/);
-  assert.match(
-    viewScript,
-    /setDisplayMode\(DisplayMode\.SINGLE, \{ focusToggle: true \}\)/
-  );
+  assert.match(selectionHandler, /player\.selectStation\(stationId\)/);
+  assert.match(selectionHandler, /renderStations\(\)/);
+  assert.doesNotMatch(selectionHandler, /setDisplayMode|DisplayMode\.SINGLE/);
   assert.doesNotMatch(viewScript, /station-type-label|station-action-label/);
 });
 

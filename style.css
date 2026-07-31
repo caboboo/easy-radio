@@ -212,6 +212,7 @@ button {
 }
 
 .view-toggle-button {
+  justify-self: start;
   min-height: 60px;
   display: inline-flex;
   align-items: center;
@@ -247,9 +248,10 @@ button {
 }
 
 .topbar {
-  display: flex;
+  display: grid;
+  grid-template-columns:
+    minmax(150px, 1fr) minmax(300px, 760px) minmax(190px, 1fr);
   align-items: center;
-  justify-content: space-between;
   gap: 14px;
   background: rgba(255, 249, 238, 0.97);
   border: 2px solid rgba(255, 255, 255, 0.7);
@@ -305,7 +307,8 @@ button {
 
 .clock {
   min-width: 190px;
-  margin-left: auto;
+  justify-self: end;
+  margin-left: 0;
   text-align: center;
   border: 2px solid #c9b697;
   border-radius: 16px;
@@ -398,11 +401,14 @@ button {
 }
 
 .playback-controls {
+  min-width: 0;
   display: grid;
-  gap: 14px;
-  padding: 14px;
+  grid-template-columns: minmax(150px, 0.75fr) minmax(260px, 1.25fr);
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
   border: 2px solid #dac7aa;
-  border-radius: 28px;
+  border-radius: 18px;
   background: #fffdf8;
 }
 
@@ -416,18 +422,18 @@ button {
 
 .play-button {
   width: 100%;
-  min-height: clamp(104px, 18vh, 170px);
+  min-height: 64px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 26px;
+  gap: 10px;
   border: 0;
-  border-bottom: 7px solid #95180f;
-  border-radius: 24px;
+  border-bottom: 5px solid #95180f;
+  border-radius: 16px;
   background: linear-gradient(#f04435, #d71f16);
   color: #fff;
-  box-shadow: 0 7px 18px rgba(158, 23, 16, 0.3);
-  font-size: clamp(42px, 7vw, 82px);
+  box-shadow: 0 5px 14px rgba(158, 23, 16, 0.3);
+  font-size: clamp(24px, 2.3vw, 32px);
   font-weight: 900;
   cursor: pointer;
   touch-action: manipulation;
@@ -514,15 +520,6 @@ button {
     font-size: clamp(20px, 3dvh, 26px);
   }
 
-  .playback-controls {
-    gap: 10px;
-    padding: 10px;
-  }
-
-  .play-button {
-    min-height: clamp(104px, 16dvh, 140px);
-    font-size: clamp(42px, 7dvh, 60px);
-  }
 
   .volume-control {
     font-size: clamp(18px, 3dvh, 24px);
@@ -559,13 +556,7 @@ button {
     margin: 0 auto;
   }
 
-  .play-button {
-    min-height: 112px;
-  }
 
-  .playback-controls {
-    padding: 10px;
-  }
 }
 
 @media (max-width: 480px) and (orientation: portrait) {
@@ -660,19 +651,6 @@ button {
     font-size: clamp(16px, 4.3vw, 19px);
   }
 
-  .playback-controls {
-    gap: 6px;
-    padding: 6px;
-    border-radius: 18px;
-  }
-
-  .play-button {
-    min-height: clamp(88px, 14dvh, 104px);
-    gap: 14px;
-    border-bottom-width: 5px;
-    border-radius: 18px;
-    font-size: clamp(34px, 9vw, 39px);
-  }
 
   .footer {
     font-size: 13px;
@@ -729,14 +707,6 @@ button {
     margin-bottom: 6px;
   }
 
-  .play-button {
-    min-height: 82px;
-  }
-
-  .playback-controls {
-    gap: 8px;
-    padding: 8px;
-  }
 
   .footer {
     display: none;
@@ -835,19 +805,6 @@ button {
     font-size: clamp(15px, 4.5svh, 18px);
   }
 
-  .playback-controls {
-    gap: 4px;
-    padding: 4px;
-    border-radius: 14px;
-  }
-
-  .play-button {
-    min-height: 70px;
-    gap: 10px;
-    border-bottom-width: 4px;
-    border-radius: 14px;
-    font-size: clamp(27px, 8svh, 31px);
-  }
 
   .station-list-view {
     padding: 8px 10px;
@@ -912,5 +869,66 @@ button {
 @media (min-width: 1200px) and (max-height: 500px) {
   .footer {
     display: flex;
+  }
+}
+
+@media (max-width: 760px) {
+  .topbar {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+  }
+
+  .view-toggle-button {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .clock {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .shared-playback-controls {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) and (orientation: portrait) {
+  .shared-playback-controls {
+    gap: 6px;
+    padding: 5px;
+    border-radius: 14px;
+  }
+
+  .play-button {
+    min-height: 58px;
+    border-bottom-width: 4px;
+    border-radius: 13px;
+    font-size: clamp(25px, 7vw, 29px);
+  }
+}
+
+@media (max-height: 500px) and (orientation: landscape) {
+  .shared-playback-controls {
+    gap: 5px;
+    padding: 4px;
+    border-radius: 12px;
+  }
+
+  .play-button {
+    min-height: 48px;
+    border-bottom-width: 3px;
+    border-radius: 11px;
+    font-size: clamp(21px, 6svh, 24px);
+  }
+}
+
+@media (max-width: 900px) and (max-height: 500px) and (orientation: landscape) {
+  .shared-playback-controls {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    grid-template-columns: 1fr;
   }
 }

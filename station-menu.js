@@ -226,7 +226,6 @@
 
     player.selectStation(stationId);
     renderStations();
-    setDisplayMode(DisplayMode.SINGLE, { focusToggle: true });
   }
 
   function handleDocumentKeydown(event) {
