@@ -11,7 +11,7 @@ Version 代表產品版本，由 Project Owner 決定。
 
 Build 代表 GitHub Pages 部署次數，每次正式 Commit + Push 都會增加。
 
-目前的 Version 與 Build Number 集中保存在 `version.js`。除非 Project Owner 明確要求升版，否則 Version 保持不變；每次完成一輪修改並準備正式部署時才將 Build Number 加 1，未 Push 的修改不算新 Build。現在是 `Version v0.3`、`Build 002`。
+目前的 Version 與 Build Number 集中保存在 `version.js`。除非 Project Owner 明確要求升版，否則 Version 保持不變；每次完成一輪修改並準備正式部署時才將 Build Number 加 1，未 Push 的修改不算新 Build。現在是 `Version v0.3`、`Build 003`。
 
 ## 檔案
 
@@ -21,11 +21,11 @@ Build 代表 GitHub Pages 部署次數，每次正式 Commit + Push 都會增加
 - `script.js`：播放按鈕、狀態與日期時間
 - `stations-data.js`：已確認的電台與串流資料
 - `station-search.js`：本機電台搜尋
-- `station-menu.js`：電台選單與切換互動
+- `station-menu.js`：單一播放／電台列表顯示模式與切換互動
 
-## 電台選單
+## 顯示模式與電台列表
 
-按頁面上方的「電台」即可開啟選單，整張電台卡片都能使用滑鼠、觸控或鍵盤直接切台，不需要另外顯示「切換電台」按鈕。目前電台以「✓ 目前電台」文字標記。電台少於 6 個時會隱藏搜尋區，達到 6 個以上時才自動顯示電台名稱、副標題、頻率與關鍵字搜尋。目前收錄：
+按頁面上方的「所有電台」可將主內容切換到電台列表，按「返回播放」可回到單一電台模式；切換顯示模式不會中斷音訊。整張電台卡片都能使用滑鼠、觸控或鍵盤直接選台，選台後會自動返回播放畫面，目前電台以「✓ 目前電台」文字標記。電台少於 6 個時不顯示搜尋區，達到 6 個以上時才顯示電台名稱、副標題、頻率與關鍵字搜尋。目前收錄：
 
 - 中廣音樂網 i Radio FM96.3
 - 中廣流行網 i like radio FM103.3

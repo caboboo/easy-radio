@@ -1,17 +1,22 @@
-(function initializeStationMenu() {
+(function initializeStationViews() {
   "use strict";
 
-  const menuButton = document.getElementById("stationMenuButton");
-  const panel = document.getElementById("stationPanel");
-  const overlay = document.getElementById("stationOverlay");
-  const closeButton = document.getElementById("stationCloseButton");
-  const panelTitle = document.getElementById("stationPanelTitle");
+  const DisplayMode = Object.freeze({
+    SINGLE: "single",
+    LIST: "list"
+  });
+
+  const toggleButton = document.getElementById("viewToggleButton");
+  const toggleIcon = document.getElementById("viewToggleIcon");
+  const toggleText = document.getElementById("viewToggleText");
+  const playerView = document.getElementById("playerView");
+  const listView = document.getElementById("stationListView");
+  const listTitle = document.getElementById("stationListTitle");
   const searchSection = document.getElementById("stationSearchSection");
   const searchInput = document.getElementById("stationSearch");
   const clearButton = document.getElementById("stationSearchClear");
   const searchStatus = document.getElementById("stationSearchStatus");
   const stationList = document.getElementById("stationList");
-  const app = document.querySelector(".app");
   const sourceStations = Array.isArray(window.EASY_RADIO_STATIONS)
     ? window.EASY_RADIO_STATIONS
     : [];
@@ -19,27 +24,26 @@
   const shouldShowStationSearch =
     window.EasyRadioStationSearch?.shouldShowStationSearch;
   const player = window.EasyRadioPlayer;
-  let pageScrollY = 0;
-  let isOpen = false;
+  let displayMode = DisplayMode.SINGLE;
 
   if (
-    !menuButton ||
-    !panel ||
-    !overlay ||
-    !closeButton ||
-    !panelTitle ||
+    !toggleButton ||
+    !toggleIcon ||
+    !toggleText ||
+    !playerView ||
+    !listView ||
+    !listTitle ||
     !searchSection ||
     !searchInput ||
     !clearButton ||
     !searchStatus ||
     !stationList ||
-    !app ||
     typeof filterStations !== "function" ||
     typeof shouldShowStationSearch !== "function" ||
     typeof player?.getCurrentStation !== "function" ||
     typeof player?.selectStation !== "function"
   ) {
-    console.warn("[Easy Radio] 電台選單無法初始化");
+    console.warn("[Easy Radio] 電台顯示模式無法初始化");
     return;
   }
 
@@ -73,7 +77,6 @@
 
   searchSection.hidden = !isSearchAvailable;
   searchStatus.hidden = !isSearchAvailable;
-  panel.classList.toggle("has-search", isSearchAvailable);
 
   function appendText(parent, tagName, className, text) {
     const cleanValue = cleanText(text);
@@ -178,92 +181,39 @@
     stationList.append(fragment);
   }
 
-  function lockPageScroll() {
-    pageScrollY = window.scrollY;
-    document.body.style.top = `-${pageScrollY}px`;
-    document.body.classList.add("station-menu-open");
-  }
-
-  function unlockPageScroll() {
-    document.body.classList.remove("station-menu-open");
-    document.body.style.removeProperty("top");
-    window.scrollTo(0, pageScrollY);
-  }
-
-  function openMenu() {
-    if (isOpen) {
+  function setDisplayMode(nextMode, { focusToggle = false } = {}) {
+    if (!Object.values(DisplayMode).includes(nextMode)) {
       return;
     }
 
-    isOpen = true;
-    lockPageScroll();
-    app.inert = true;
-    panel.inert = false;
-    panel.setAttribute("aria-hidden", "false");
-    menuButton.setAttribute("aria-expanded", "true");
-    overlay.classList.add("is-open");
-    panel.classList.add("is-open");
+    displayMode = nextMode;
+    const showList = displayMode === DisplayMode.LIST;
 
-    if (isSearchAvailable) {
-      searchInput.focus();
-    } else {
-      closeButton.focus();
+    playerView.hidden = showList;
+    listView.hidden = !showList;
+    toggleButton.setAttribute("aria-pressed", String(showList));
+    toggleButton.setAttribute(
+      "aria-label",
+      showList ? "返回播放畫面" : "顯示所有電台"
+    );
+    toggleIcon.textContent = showList ? "▶" : "▦";
+    toggleText.textContent = showList ? "返回播放" : "所有電台";
+
+    if (showList) {
+      renderStations();
+      listTitle.focus();
+    } else if (focusToggle) {
+      toggleButton.focus();
     }
   }
 
-  function closeMenu({ returnFocus = true } = {}) {
-    if (!isOpen) {
-      return;
-    }
-
-    isOpen = false;
-    app.inert = false;
-
-    if (returnFocus) {
-      menuButton.focus();
-    }
-
-    panel.inert = true;
-    panel.setAttribute("aria-hidden", "true");
-    menuButton.setAttribute("aria-expanded", "false");
-    overlay.classList.remove("is-open");
-    panel.classList.remove("is-open");
-    unlockPageScroll();
-  }
-
-  function handlePanelKeydown(event) {
-    if (event.key === "Escape") {
-      event.preventDefault();
-      closeMenu();
-      return;
-    }
-
-    if (event.key !== "Tab") {
-      return;
-    }
-
-    const focusableElements = Array.from(
-      panel.querySelectorAll(
-        'button:not([disabled]):not([hidden]), input:not([disabled])'
-      )
-    ).filter((element) => !element.hidden);
-
-    if (focusableElements.length === 0) {
-      event.preventDefault();
-      panelTitle.focus();
-      return;
-    }
-
-    const firstElement = focusableElements[0];
-    const lastElement = focusableElements[focusableElements.length - 1];
-
-    if (event.shiftKey && document.activeElement === firstElement) {
-      event.preventDefault();
-      lastElement.focus();
-    } else if (!event.shiftKey && document.activeElement === lastElement) {
-      event.preventDefault();
-      firstElement.focus();
-    }
+  function toggleDisplayMode() {
+    setDisplayMode(
+      displayMode === DisplayMode.SINGLE
+        ? DisplayMode.LIST
+        : DisplayMode.SINGLE,
+      { focusToggle: displayMode === DisplayMode.LIST }
+    );
   }
 
   function handleStationListClick(event) {
@@ -276,13 +226,19 @@
 
     player.selectStation(stationId);
     renderStations();
-    closeMenu();
+    setDisplayMode(DisplayMode.SINGLE, { focusToggle: true });
   }
 
-  menuButton.addEventListener("click", openMenu);
-  closeButton.addEventListener("click", () => closeMenu());
-  overlay.addEventListener("click", () => closeMenu());
-  panel.addEventListener("keydown", handlePanelKeydown);
+  function handleDocumentKeydown(event) {
+    if (event.key !== "Escape" || displayMode !== DisplayMode.LIST) {
+      return;
+    }
+
+    event.preventDefault();
+    setDisplayMode(DisplayMode.SINGLE, { focusToggle: true });
+  }
+
+  toggleButton.addEventListener("click", toggleDisplayMode);
   stationList.addEventListener("click", handleStationListClick);
   searchInput.addEventListener("input", renderStations);
   clearButton.addEventListener("click", () => {
@@ -290,7 +246,9 @@
     renderStations();
     searchInput.focus();
   });
+  document.addEventListener("keydown", handleDocumentKeydown);
   document.addEventListener("easy-radio:station-change", renderStations);
 
   renderStations();
+  setDisplayMode(DisplayMode.SINGLE);
 })();
