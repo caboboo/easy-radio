@@ -34,7 +34,15 @@ test("one control set floats at page bottom outside both views", () => {
   const listView = html.match(/<section[\s\S]*?id="stationListView"[\s\S]*?<\/section>/)?.[0] || "";
 
   assert.doesNotMatch(topbar, /playButton|volumeSlider|muteButton/);
+  assert.match(topbar, /id="viewToggleButton"/);
   assert.match(topbar, /class="clock"/);
+  assert.ok(
+    topbar.indexOf('id="viewToggleButton"') < topbar.indexOf('class="clock"')
+  );
+  assert.match(
+    styles,
+    /\.topbar\s*\{[\s\S]*?display: grid;[\s\S]*?align-items: center;[\s\S]*?justify-content: space-between;/
+  );
   assert.match(floatingBar, /id="playButton"/);
   assert.match(floatingBar, /id="volumeSlider"/);
   assert.match(floatingBar, /id="muteButton"/);
