@@ -129,7 +129,7 @@ function updatePlaybackUI() {
     (playbackState === PlaybackState.ERROR && !userWantsPlayback);
 
   statusText.textContent = ui.message;
-  playButton.classList.toggle("is-playing", isPlaying);
+  playButton.classList.toggle("is-stop-action", canCancelPlayback);
   playButton.setAttribute("aria-pressed", String(isPlaying));
   playIcon.textContent = canCancelPlayback ? "Ⅱ" : "▶";
   playText.textContent = shouldOfferReplay

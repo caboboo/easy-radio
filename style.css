@@ -456,9 +456,9 @@ button {
   justify-content: center;
   gap: 10px;
   border: 0;
-  border-bottom: 5px solid #95180f;
+  border-bottom: 5px solid #14521c;
   border-radius: 16px;
-  background: linear-gradient(#f04435, #d71f16);
+  background: linear-gradient(#348f40, #21762b);
   color: #fff;
   box-shadow: 0 5px 14px rgba(158, 23, 16, 0.3);
   font-size: clamp(24px, 2.3vw, 32px);
@@ -473,9 +473,9 @@ button {
   border-bottom-width: 4px;
 }
 
-.play-button.is-playing {
-  background: linear-gradient(#348f40, #21762b);
-  border-bottom-color: #14521c;
+.play-button.is-stop-action {
+  background: linear-gradient(#f04435, #d71f16);
+  border-bottom-color: #95180f;
 }
 
 .play-icon {
