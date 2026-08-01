@@ -28,7 +28,7 @@ test("pause or cancel actions apply the red stop-action class", () => {
     styles,
     /\.play-button\.is-stop-action\s*\{[\s\S]*?background: linear-gradient\(#f04435, #d71f16\);[\s\S]*?border-bottom-color: #95180f;/
   );
-  assert.doesNotMatch(script, /classList\.toggle\("is-playing"/);
+  assert.doesNotMatch(script, /playButton\.classList\.toggle\("is-playing"/);
   assert.doesNotMatch(styles, /\.play-button\.is-playing/);
 });
 

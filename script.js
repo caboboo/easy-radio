@@ -1,6 +1,7 @@
 const radio = document.getElementById("radio");
 const radioSource = document.getElementById("radioSource");
 const playButton = document.getElementById("playButton");
+const playbackControls = document.querySelector(".floating-playback-bar");
 const playIcon = document.getElementById("playIcon");
 const playText = document.getElementById("playText");
 const statusText = document.getElementById("statusText");
@@ -129,6 +130,7 @@ function updatePlaybackUI() {
     (playbackState === PlaybackState.ERROR && !userWantsPlayback);
 
   statusText.textContent = ui.message;
+  playbackControls.classList.toggle("is-playing", isPlaying);
   playButton.classList.toggle("is-stop-action", canCancelPlayback);
   playButton.setAttribute("aria-pressed", String(isPlaying));
   playIcon.textContent = canCancelPlayback ? "Ⅱ" : "▶";
