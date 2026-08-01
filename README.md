@@ -11,7 +11,7 @@ Version 代表產品版本，由 Project Owner 決定。
 
 Build 代表 GitHub Pages 部署次數，每次正式 Commit + Push 都會增加。
 
-目前的 Version 與 Build Number 集中保存在 `version.js`。除非 Project Owner 明確要求升版，否則 Version 保持不變；每次完成一輪修改並準備正式部署時才將 Build Number 加 1，未 Push 的修改不算新 Build。現在是 `Version v0.3`、`Build 009`。
+目前的 Version 與 Build Number 集中保存在 `version.js`。除非 Project Owner 明確要求升版，否則 Version 保持不變；每次完成一輪修改並準備正式部署時才將 Build Number 加 1，未 Push 的修改不算新 Build。現在是 `Version v0.3`、`Build 010`。
 
 ## 檔案
 
@@ -22,6 +22,10 @@ Build 代表 GitHub Pages 部署次數，每次正式 Commit + Push 都會增加
 - `stations-data.js`：已確認的電台與串流資料
 - `station-search.js`：本機電台搜尋
 - `station-menu.js`：單一播放／電台列表顯示模式與切換互動
+
+## 加入 iPhone 主畫面
+
+iPhone Safari 可透過「分享」→「加入主畫面」安裝 Easy Radio，預設名稱為 Easy Radio。App Icon 使用 easy / radio 兩行設計，正式 PNG／ICO 與 SVG 母圖位於 icons/，Web App Manifest 位於 site.webmanifest。本功能只提供圖示與 standalone metadata，沒有加入離線功能或 Service Worker。若主畫面已存在舊圖示，請先刪除舊捷徑，再重新用 Safari 開啟網站並加入主畫面，才能看到新版 Icon。
 
 ## 顯示模式與電台列表
 
