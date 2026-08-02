@@ -30,7 +30,7 @@
   const shouldShowStationSearch =
     window.EasyRadioStationSearch?.shouldShowStationSearch;
   const player = window.EasyRadioPlayer;
-  let displayMode = DisplayMode.SINGLE;
+  let displayMode = DisplayMode.LIST;
   let previousDisplayMode = DisplayMode.SINGLE;
 
   if (
@@ -215,10 +215,10 @@
     toggleButton.setAttribute("aria-pressed", String(showList));
     toggleButton.setAttribute(
       "aria-label",
-      showList ? "返回播放畫面" : "顯示所有電台"
+      showList ? "顯示目前電台" : "顯示所有電台"
     );
     toggleIcon.textContent = showList ? "▶" : "▦";
-    toggleText.textContent = showList ? "返回播放" : "所有電台";
+    toggleText.textContent = showList ? "目前電台" : "所有電台";
 
     if (showList) {
       renderStations();
@@ -300,11 +300,6 @@
       returnFromSettings();
       return;
     }
-
-    if (displayMode === DisplayMode.LIST) {
-      event.preventDefault();
-      setDisplayMode(DisplayMode.SINGLE, { focusToggle: true });
-    }
   }
 
   toggleButton.addEventListener("click", toggleDisplayMode);
@@ -320,6 +315,5 @@
   document.addEventListener("keydown", handleDocumentKeydown);
   document.addEventListener("easy-radio:station-change", renderStations);
 
-  renderStations();
-  setDisplayMode(DisplayMode.SINGLE);
+  setDisplayMode(DisplayMode.LIST);
 })();

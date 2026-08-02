@@ -11,17 +11,19 @@ const viewScript = fs.readFileSync(
 );
 const styles = fs.readFileSync(path.join(projectRoot, "style.css"), "utf8");
 
-test("the page defaults to a single-player view with a valid mode toggle", () => {
+test("the page defaults to the station-list home without a single-view flash", () => {
+  const listViewTag =
+    html.match(/<section(?=[^>]*\bid="stationListView")[^>]*>/)?.[0] ||
+    "";
+
   assert.match(html, /id="viewToggleButton"/);
-  assert.match(html, /aria-label="顯示所有電台"/);
-  assert.match(html, /aria-pressed="false"/);
+  assert.match(html, /aria-label="顯示目前電台"/);
+  assert.match(html, /aria-pressed="true"/);
   assert.match(html, /aria-controls="playerView stationListView"/);
-  assert.match(html, /id="viewToggleText">所有電台<\/span>/);
-  assert.match(html, /<section id="playerView" class="player-card">/);
-  assert.match(
-    html,
-    /id="stationListView"[\s\S]*?aria-labelledby="stationListTitle"[\s\S]*?hidden/
-  );
+  assert.match(html, /id="viewToggleText">目前電台<\/span>/);
+  assert.match(html, /<section id="playerView" class="player-card" hidden>/);
+  assert.match(listViewTag, /aria-labelledby="stationListTitle"/);
+  assert.doesNotMatch(listViewTag, /\bhidden\b/);
   assert.match(
     html,
     /id="settingsView"[\s\S]*?aria-labelledby="settingsTitle"[\s\S]*?hidden/
@@ -141,19 +143,33 @@ test("view state switches three content views without controlling audio", () => 
   assert.match(viewScript, /SINGLE: "single"/);
   assert.match(viewScript, /LIST: "list"/);
   assert.match(viewScript, /SETTINGS: "settings"/);
-  assert.match(viewScript, /let displayMode = DisplayMode\.SINGLE/);
+  assert.match(viewScript, /let displayMode = DisplayMode\.LIST/);
+  assert.match(viewScript, /setDisplayMode\(DisplayMode\.LIST\);/);
   assert.match(viewScript, /playerView\.hidden = displayMode !== DisplayMode\.SINGLE/);
   assert.match(viewScript, /listView\.hidden = !showList/);
   assert.match(viewScript, /settingsView\.hidden = !showSettings/);
 
   assert.match(viewScript, /stationList\.querySelector\("\.station-option"\)/);
   assert.doesNotMatch(viewScript, /listTitle\.focus\(\)/);
-  assert.match(viewScript, /showList \? "返回播放" : "所有電台"/);
+  assert.match(viewScript, /showList \? "目前電台" : "所有電台"/);
+  assert.match(viewScript, /showList \? "顯示目前電台" : "顯示所有電台"/);
   assert.match(viewScript, /event\.key !== "Escape"/);
   assert.doesNotMatch(
     viewScript,
     /\b(?:audio|radio)\.(?:load|play|pause)|userWantsPlayback|retryCount/
   );
+});
+
+test("Escape leaves the station-list home unchanged", () => {
+  const keyHandler =
+    viewScript.match(
+      /function handleDocumentKeydown\(event\) \{([\s\S]*?)\n  \}/
+    )?.[1] || "";
+
+  assert.match(keyHandler, /displayMode === DisplayMode\.SETTINGS/);
+  assert.match(keyHandler, /returnFromSettings\(\)/);
+  assert.doesNotMatch(keyHandler, /displayMode === DisplayMode\.LIST/);
+  assert.doesNotMatch(keyHandler, /setDisplayMode\(DisplayMode\.SINGLE/);
 });
 
 test("station cards remain accessible and selection stays in the list view", () => {
