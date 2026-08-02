@@ -34,6 +34,33 @@ function readPngDimensions(filePath) {
   };
 }
 
+function relativeLuminance(hexColor) {
+  const channels = hexColor
+    .slice(1)
+    .match(/.{2}/g)
+    .map(channel => parseInt(channel, 16) / 255)
+    .map(value =>
+      value <= 0.04045
+        ? value / 12.92
+        : ((value + 0.055) / 1.055) ** 2.4
+    );
+
+  return (
+    0.2126 * channels[0] +
+    0.7152 * channels[1] +
+    0.0722 * channels[2]
+  );
+}
+
+function contrastRatio(background, foreground) {
+  const luminances = [
+    relativeLuminance(background),
+    relativeLuminance(foreground)
+  ].sort((left, right) => right - left);
+
+  return (luminances[0] + 0.05) / (luminances[1] + 0.05);
+}
+
 test("all required raster icons have exact dimensions and compact RGB PNGs", () => {
   for (const [fileName, [expectedWidth, expectedHeight]] of pngExpectations) {
     const details = readPngDimensions(path.join(iconDirectory, fileName));
@@ -80,8 +107,20 @@ test("the SVG master preserves the exact two-line brand design", () => {
   );
 
   assert.match(svg, /width="1024" height="1024"/);
-  assert.match(svg, /fill="#4A2B12"/);
-  assert.match(svg, /fill="#FFF8EB"/);
+  assert.match(svg, /fill="#552807"/);
+  assert.match(svg, /fill="#FFFDF7"/);
+  assert.match(svg, /font-size="286" font-weight="600"/);
+  assert.match(svg, /font-size="330" font-weight="700"/);
+  assert.match(svg, /y="460"[^>]*>easy<\/text>/);
+  assert.match(svg, /y="685"[^>]*>radio<\/text>/);
+  assert.ok(330 / 286 >= 1.1 && 330 / 286 <= 1.2);
+  assert.ok(286 / 248 >= 1.15);
+  assert.ok(330 / 286 >= 1.15);
+  assert.ok(685 - 460 < 704 - 456);
+  assert.ok(
+    contrastRatio("#552807", "#FFFDF7") >
+      contrastRatio("#4A2B12", "#FFF8EB")
+  );
   assert.match(svg, />easy<\/text>/);
   assert.match(svg, />radio<\/text>/);
   assert.doesNotMatch(svg, /linearGradient|filter|rx=/);
