@@ -32,10 +32,10 @@ test("pause or cancel actions apply the red stop-action class", () => {
   assert.doesNotMatch(styles, /\.play-button\.is-playing/);
 });
 
-test("play button geometry and elevation stay unchanged", () => {
+test("play button keeps its existing style with a slightly smaller height", () => {
   assert.match(
     styles,
-    /\.play-button\s*\{[\s\S]*?width: 100%;[\s\S]*?min-height: 64px;[\s\S]*?border-radius: 16px;[\s\S]*?box-shadow: 0 5px 14px rgba\(158, 23, 16, 0\.3\);/
+    /\.play-button\s*\{[\s\S]*?width: 100%;[\s\S]*?min-height: 60px;[\s\S]*?border-radius: 16px;[\s\S]*?box-shadow: 0 5px 14px rgba\(158, 23, 16, 0\.3\);/
   );
   assert.equal((html.match(/id="playButton"/g) || []).length, 1);
   assert.equal((html.match(/<audio\b/g) || []).length, 1);

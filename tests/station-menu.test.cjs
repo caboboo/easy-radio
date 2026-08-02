@@ -73,11 +73,46 @@ test("one control set floats at page bottom outside all three views", () => {
   );
   assert.match(
     styles,
-    /\.floating-playback-bar\s*\{[\s\S]*?position: fixed;[\s\S]*?bottom: calc\(12px \+ env\(safe-area-inset-bottom\)\);[\s\S]*?max-width: 880px;/
+    /\.floating-playback-bar\s*\{[\s\S]*?position: fixed;[\s\S]*?bottom: calc\(16px \+ env\(safe-area-inset-bottom\)\);[\s\S]*?max-width: 880px;/
   );
   assert.match(
     styles,
-    /\.app\s*\{[\s\S]*?calc\(128px \+ env\(safe-area-inset-bottom\)\)/
+    /\.app\s*\{[\s\S]*?calc\(132px \+ env\(safe-area-inset-bottom\)\)/
+  );
+});
+
+test("floating player polish remains subtle and keeps responsive safe areas", () => {
+  assert.match(
+    styles,
+    /\.playback-controls\s*\{[\s\S]*?grid-template-columns: minmax\(150px, 0\.7fr\) minmax\(280px, 1\.3fr\);[\s\S]*?gap: 12px;[\s\S]*?padding: 9px 10px;[\s\S]*?border: 1px solid #dac7aa;/
+  );
+  assert.match(
+    styles,
+    /\.floating-playback-bar\s*\{[\s\S]*?border-color: #d8c9b2;[\s\S]*?border-radius: 26px;[\s\S]*?background: #fff9ee;[\s\S]*?box-shadow: 0 12px 28px rgba\(31, 17, 7, 0\.24\);/
+  );
+  assert.match(
+    styles,
+    /\.desktop-volume\s*\{[\s\S]*?grid-template-columns: minmax\(210px, 1fr\) auto;[\s\S]*?gap: 16px;[\s\S]*?padding: 3px 10px;/
+  );
+  assert.match(
+    styles,
+    /@media \(max-width: 760px\)[\s\S]*?bottom: calc\(12px \+ env\(safe-area-inset-bottom\)\);/
+  );
+  assert.match(
+    styles,
+    /@media \(max-width: 480px\) and \(orientation: portrait\)[\s\S]*?\.shared-playback-controls\s*\{[\s\S]*?border-radius: 18px;/
+  );
+  assert.match(
+    styles,
+    /@media \(max-width: 480px\) and \(orientation: portrait\)[\s\S]*?\.play-button\s*\{[\s\S]*?min-height: 55px;/
+  );
+  assert.match(
+    styles,
+    /@media \(max-height: 500px\) and \(orientation: landscape\)[\s\S]*?\.play-button\s*\{[\s\S]*?min-height: 45px;/
+  );
+  assert.match(
+    styles,
+    /@media \(max-width: 900px\) and \(max-height: 500px\) and \(orientation: landscape\)[\s\S]*?bottom: calc\(10px \+ env\(safe-area-inset-bottom\)\);/
   );
 });
 
