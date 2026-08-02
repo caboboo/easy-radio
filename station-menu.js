@@ -11,7 +11,8 @@
   const toggleIcon = document.getElementById("viewToggleIcon");
   const toggleText = document.getElementById("viewToggleText");
   const settingsButton = document.getElementById("settingsButton");
-  const settingsBackButton = document.getElementById("settingsBackButton");
+  const settingsGearIcon = document.getElementById("settingsGearIcon");
+  const settingsCloseIcon = document.getElementById("settingsCloseIcon");
   const mainContent = document.querySelector(".main-content");
   const playerView = document.getElementById("playerView");
   const stationName = document.getElementById("stationName");
@@ -32,14 +33,15 @@
     window.EasyRadioStationSearch?.shouldShowStationSearch;
   const player = window.EasyRadioPlayer;
   let displayMode = DisplayMode.LIST;
-  let previousDisplayMode = DisplayMode.SINGLE;
+  let previousDisplayMode = DisplayMode.LIST;
 
   if (
     !toggleButton ||
     !toggleIcon ||
     !toggleText ||
     !settingsButton ||
-    !settingsBackButton ||
+    !settingsGearIcon ||
+    !settingsCloseIcon ||
     !mainContent ||
     !playerView ||
     !stationName ||
@@ -211,8 +213,12 @@
     listView.hidden = !showList;
     settingsView.hidden = !showSettings;
     toggleButton.hidden = showSettings;
-    settingsBackButton.hidden = !showSettings;
-    settingsButton.hidden = showSettings;
+    settingsButton.setAttribute(
+      "aria-label",
+      showSettings ? "關閉設定" : "設定"
+    );
+    settingsGearIcon.hidden = showSettings;
+    settingsCloseIcon.hidden = !showSettings;
     mainContent.classList.toggle("is-settings-view", showSettings);
     toggleButton.setAttribute("aria-pressed", String(showList));
     toggleButton.setAttribute(
@@ -227,7 +233,7 @@
     }
 
     if (showSettings) {
-      settingsBackButton.focus();
+      settingsButton.focus();
     } else if (focusSettingsButton) {
       settingsButton.focus();
     } else if (focusToggle) {
@@ -267,7 +273,7 @@
     return previousDisplayMode === DisplayMode.LIST ||
       previousDisplayMode === DisplayMode.SINGLE
       ? previousDisplayMode
-      : DisplayMode.SINGLE;
+      : DisplayMode.LIST;
   }
 
   function returnFromSettings() {
@@ -278,6 +284,15 @@
     setDisplayMode(getSettingsReturnMode(), {
       focusSettingsButton: true
     });
+  }
+
+  function handleSettingsButtonClick() {
+    if (displayMode === DisplayMode.SETTINGS) {
+      returnFromSettings();
+      return;
+    }
+
+    openSettings();
   }
 
   function handleStationListClick(event) {
@@ -305,8 +320,7 @@
   }
 
   toggleButton.addEventListener("click", toggleDisplayMode);
-  settingsButton.addEventListener("click", openSettings);
-  settingsBackButton.addEventListener("click", returnFromSettings);
+  settingsButton.addEventListener("click", handleSettingsButtonClick);
   stationList.addEventListener("click", handleStationListClick);
   searchInput.addEventListener("input", renderStations);
   clearButton.addEventListener("click", () => {

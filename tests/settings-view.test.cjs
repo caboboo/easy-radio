@@ -21,23 +21,27 @@ test("date and time are removed without leaving visible clock markup", () => {
   );
 });
 
-test("the fixed settings button is accessible and uses a decorative inline SVG", () => {
+test("the fixed settings control exposes decorative gear and close SVGs", () => {
   assert.match(
     html,
     /<button[\s\S]*?id="settingsButton"[\s\S]*?type="button"[\s\S]*?aria-label="設定"[\s\S]*?aria-controls="settingsView"/
   );
   assert.match(
     html,
-    /id="settingsButton"[\s\S]*?<svg[\s\S]*?aria-hidden="true"[\s\S]*?focusable="false"/
-  );
-  assert.doesNotMatch(html, /⚙|⚙️/);
-  assert.match(
-    styles,
-    /\.settings-button\s*\{[\s\S]*?position: fixed;[\s\S]*?top: max\(14px, env\(safe-area-inset-top\)\);[\s\S]*?right: max\(14px, env\(safe-area-inset-right\)\);[\s\S]*?z-index: 20;[\s\S]*?width: 52px;[\s\S]*?min-height: 52px;/
+    /id="settingsGearIcon"[\s\S]*?aria-hidden="true"[\s\S]*?focusable="false"/
   );
   assert.match(
+    html,
+    /id="settingsCloseIcon"[\s\S]*?aria-hidden="true"[\s\S]*?focusable="false"[\s\S]*?hidden/
+  );
+  assert.doesNotMatch(html, /⚙|⚙️|settingsBackButton|settings-back-button/);
+  assert.match(
     styles,
-    /@media \(max-width: 900px\)[\s\S]*?\.settings-button\s*\{[\s\S]*?min-height: 44px;/
+    /\.settings-button\s*\{[\s\S]*?position: fixed;[\s\S]*?top: calc\(14px \+ env\(safe-area-inset-top\)\);[\s\S]*?right: calc\(14px \+ env\(safe-area-inset-right\)\);[\s\S]*?z-index: 20;[\s\S]*?width: 52px;[\s\S]*?min-height: 52px;/
+  );
+  assert.match(
+    styles,
+    /@media \(max-width: 480px\) and \(orientation: portrait\)[\s\S]*?\.settings-button\s*\{[\s\S]*?min-height: 48px;/
   );
   assert.match(
     styles,
@@ -60,7 +64,7 @@ test("settings view contains only the requested shell and version footer", () =>
   assert.match(settingsView, /id="buildText"/);
   assert.doesNotMatch(
     settingsView,
-    /checkbox|switch|toggle|email|password|localStorage|登入|自動播放/
+    /settingsBackButton|<button|checkbox|switch|toggle|email|password|localStorage|登入|自動播放/
   );
   assert.equal((html.match(/id="versionText"/g) || []).length, 1);
   assert.equal((html.match(/id="buildText"/g) || []).length, 1);
@@ -71,8 +75,8 @@ test("settings view contains only the requested shell and version footer", () =>
   );
 });
 
-test("settings mode remembers and validates the previous primary view", () => {
-  assert.match(viewScript, /let previousDisplayMode = DisplayMode\.SINGLE/);
+test("settings mode remembers only primary views and falls back to list", () => {
+  assert.match(viewScript, /let previousDisplayMode = DisplayMode\.LIST/);
   assert.match(
     viewScript,
     /displayMode !== DisplayMode\.SINGLE[\s\S]*?displayMode !== DisplayMode\.LIST/
@@ -80,18 +84,17 @@ test("settings mode remembers and validates the previous primary view", () => {
   assert.match(viewScript, /previousDisplayMode = displayMode/);
   assert.match(
     viewScript,
-    /previousDisplayMode === DisplayMode\.LIST \|\|[\s\S]*?previousDisplayMode === DisplayMode\.SINGLE[\s\S]*?\? previousDisplayMode[\s\S]*?: DisplayMode\.SINGLE/
+    /previousDisplayMode === DisplayMode\.LIST \|\|[\s\S]*?previousDisplayMode === DisplayMode\.SINGLE[\s\S]*?\? previousDisplayMode[\s\S]*?: DisplayMode\.LIST/
   );
   assert.match(
     viewScript,
     /setDisplayMode\(getSettingsReturnMode\(\), \{[\s\S]*?focusSettingsButton: true/
   );
-  assert.match(viewScript, /settingsButton\.hidden = showSettings/);
   assert.match(viewScript, /toggleButton\.hidden = showSettings/);
-  assert.match(viewScript, /settingsBackButton\.hidden = !showSettings/);
+  assert.doesNotMatch(viewScript, /settingsButton\.hidden/);
 });
 
-test("settings entry, return, and Escape only change view state and focus", () => {
+test("one settings button swaps icon, label, action, and focus", () => {
   const openSettings =
     viewScript.match(/function openSettings\(\) \{([\s\S]*?)\n  \}/)?.[1] ||
     "";
@@ -99,19 +102,31 @@ test("settings entry, return, and Escape only change view state and focus", () =
     viewScript.match(
       /function returnFromSettings\(\) \{([\s\S]*?)\n  \}/
     )?.[1] || "";
+  const settingsHandler =
+    viewScript.match(
+      /function handleSettingsButtonClick\(\) \{([\s\S]*?)\n  \}/
+    )?.[1] || "";
 
   assert.match(openSettings, /setDisplayMode\(DisplayMode\.SETTINGS\)/);
   assert.match(returnFromSettings, /getSettingsReturnMode/);
-  assert.match(viewScript, /if \(displayMode === DisplayMode\.SETTINGS\)/);
-  assert.match(viewScript, /settingsBackButton\.focus\(\)/);
-  assert.match(viewScript, /settingsButton\.focus\(\)/);
-  assert.match(viewScript, /settingsButton\.addEventListener\("click", openSettings\)/);
+  assert.match(settingsHandler, /displayMode === DisplayMode\.SETTINGS/);
+  assert.match(settingsHandler, /returnFromSettings\(\)/);
+  assert.match(settingsHandler, /openSettings\(\)/);
   assert.match(
     viewScript,
-    /settingsBackButton\.addEventListener\("click", returnFromSettings\)/
+    /showSettings \? "關閉設定" : "設定"/
   );
+  assert.match(viewScript, /settingsGearIcon\.hidden = showSettings/);
+  assert.match(viewScript, /settingsCloseIcon\.hidden = !showSettings/);
+  assert.match(viewScript, /if \(showSettings\) \{[\s\S]*?settingsButton\.focus\(\)/);
+  assert.match(viewScript, /settingsButton\.addEventListener\("click", handleSettingsButtonClick\)/);
+  assert.equal(
+    (viewScript.match(/settingsButton\.addEventListener\("click"/g) || []).length,
+    1
+  );
+  assert.doesNotMatch(viewScript, /settingsBackButton/);
   assert.doesNotMatch(
-    openSettings + returnFromSettings,
+    openSettings + returnFromSettings + settingsHandler,
     /selectStation|\.src|\.load\(|\.play\(|\.pause\(|userWantsPlayback|retry/
   );
 });

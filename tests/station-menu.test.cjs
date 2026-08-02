@@ -53,10 +53,10 @@ test("one control set floats at page bottom outside all three views", () => {
 
   assert.doesNotMatch(topbar, /playButton|volumeSlider|muteButton|class="clock"/);
   assert.match(topbar, /id="viewToggleButton"/);
-  assert.match(topbar, /id="settingsBackButton"/);
+  assert.doesNotMatch(topbar, /settingsBackButton|settings-back-button/);
   assert.match(
     styles,
-    /\.topbar\s*\{[\s\S]*?display: flex;[\s\S]*?align-items: center;/
+    /\.view-toggle-button\s*\{[\s\S]*?position: fixed;[\s\S]*?top: calc\(14px \+ env\(safe-area-inset-top\)\);[\s\S]*?left: calc\(14px \+ env\(safe-area-inset-left\)\);/
   );
   assert.match(floatingBar, /id="playButton"/);
   assert.match(floatingBar, /id="volumeSlider"/);
