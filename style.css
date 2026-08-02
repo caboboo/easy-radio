@@ -425,6 +425,7 @@ button {
 .volume-slider:focus-visible,
 .mute-button:focus-visible,
 .play-button:focus-visible,
+#stationName:focus,
 .view-toggle-button:focus-visible,
 .settings-button:focus-visible,
 .settings-back-button:focus-visible,
@@ -436,21 +437,26 @@ button {
 }
 
 .player-card {
-  align-self: center;
+  align-self: start;
   display: grid;
-  grid-template-columns: minmax(180px, 29%) 1fr;
-  gap: clamp(20px, 4vw, 50px);
+  grid-template-columns: minmax(170px, 280px) minmax(0, 1fr);
+  gap: clamp(20px, 4vw, 42px);
   align-items: center;
-  width: min(100%, 1320px);
+  width: min(100%, 1080px);
   margin: 0 auto;
-  padding: clamp(22px, 4vw, 50px);
+  padding: clamp(22px, 3.5vw, 42px);
   border: 2px solid rgba(255, 255, 255, 0.85);
   border-radius: 28px;
   background: rgba(255, 249, 238, 0.98);
   box-shadow: var(--shadow);
 }
 
+.player-card:not(.has-station-logo) {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .station-mark {
+  width: min(100%, 280px);
   aspect-ratio: 1 / 1;
   display: flex;
   flex-direction: column;
@@ -465,7 +471,7 @@ button {
 
 .station-mark strong {
   color: var(--red);
-  font-size: clamp(92px, 15vw, 176px);
+  font-size: clamp(80px, 10vw, 132px);
   font-style: italic;
   line-height: 0.72;
 }
@@ -473,30 +479,55 @@ button {
 .station-mark span {
   max-width: 90%;
   text-align: center;
-  font-size: clamp(28px, 5vw, 60px);
+  font-size: clamp(24px, 3.4vw, 42px);
   font-weight: 900;
   line-height: 0.95;
 }
 
 .station-mark.has-long-brand span {
-  font-size: clamp(22px, 3.7vw, 46px);
+  font-size: clamp(20px, 2.8vw, 34px);
 }
 
 .station-mark small {
-  font-size: clamp(20px, 3vw, 38px);
+  font-size: clamp(18px, 2.2vw, 28px);
   font-weight: 850;
+}
+
+.station-info {
+  min-width: 0;
+  display: grid;
+  gap: clamp(8px, 1.5vw, 16px);
+  align-content: center;
+  justify-items: start;
 }
 
 .station-info h1 {
   margin: 0;
-  font-size: clamp(42px, 7vw, 92px);
-  line-height: 1.05;
+  max-width: 100%;
+  font-size: clamp(38px, 5vw, 70px);
+  line-height: 1.08;
+  overflow-wrap: anywhere;
 }
 
 .frequency {
-  margin: 4px 0 18px;
-  font-size: clamp(28px, 4.3vw, 58px);
-  font-weight: 850;
+  margin: 0;
+  color: #51483f;
+  font-size: clamp(23px, 2.8vw, 38px);
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.station-detail-status {
+  justify-self: start;
+  margin: 2px 0 0;
+  padding: 5px 10px;
+  border: 1px solid #c8b394;
+  border-radius: 999px;
+  background: #f1e5d1;
+  color: #5b4634;
+  font-size: clamp(15px, 1.5vw, 18px);
+  font-weight: 750;
+  line-height: 1.25;
 }
 
 .song {
@@ -737,14 +768,23 @@ button {
   }
 
   .player-card {
+    width: min(100%, 760px);
     grid-template-columns: 1fr;
     text-align: center;
     padding: 22px;
   }
 
   .station-mark {
-    width: min(48vw, 250px);
+    width: min(42vw, 220px);
     margin: 0 auto;
+  }
+
+  .station-info {
+    justify-items: center;
+  }
+
+  .station-detail-status {
+    justify-self: center;
   }
 
 }
@@ -823,8 +863,12 @@ button {
   }
 
   .frequency {
-    margin: 2px 0 6px;
     font-size: clamp(21px, 5.8vw, 25px);
+  }
+
+  .station-detail-status {
+    padding: 4px 9px;
+    font-size: 14px;
   }
 
   .song {
@@ -974,8 +1018,16 @@ button {
   }
 
   .frequency {
-    margin: 1px 0 3px;
     font-size: clamp(20px, 5.8svh, 23px);
+  }
+
+  .station-info {
+    gap: 4px;
+  }
+
+  .station-detail-status {
+    padding: 3px 8px;
+    font-size: 13px;
   }
 
   .song {

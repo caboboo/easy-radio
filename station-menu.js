@@ -14,6 +14,7 @@
   const settingsBackButton = document.getElementById("settingsBackButton");
   const mainContent = document.querySelector(".main-content");
   const playerView = document.getElementById("playerView");
+  const stationName = document.getElementById("stationName");
   const listView = document.getElementById("stationListView");
   const settingsView = document.getElementById("settingsView");
   const settingsTitle = document.getElementById("settingsTitle");
@@ -41,6 +42,7 @@
     !settingsBackButton ||
     !mainContent ||
     !playerView ||
+    !stationName ||
     !listView ||
     !settingsView ||
     !settingsTitle ||
@@ -228,11 +230,11 @@
       settingsBackButton.focus();
     } else if (focusSettingsButton) {
       settingsButton.focus();
+    } else if (focusToggle) {
+      (showList ? toggleButton : stationName).focus();
     } else if (showList) {
       const firstStation = stationList.querySelector(".station-option");
       (firstStation || toggleButton).focus();
-    } else if (focusToggle) {
-      toggleButton.focus();
     }
   }
 
@@ -245,7 +247,7 @@
       displayMode === DisplayMode.SINGLE
         ? DisplayMode.LIST
         : DisplayMode.SINGLE,
-      { focusToggle: displayMode === DisplayMode.LIST }
+      { focusToggle: true }
     );
   }
 

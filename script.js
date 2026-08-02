@@ -9,6 +9,7 @@ const desktopVolume = document.getElementById("desktopVolume");
 const volumeSlider = document.getElementById("volumeSlider");
 const volumeText = document.getElementById("volumeText");
 const muteButton = document.getElementById("muteButton");
+const stationDetailElement = document.getElementById("playerView");
 const stationNameElement = document.getElementById("stationName");
 const stationSubtitleElement = document.getElementById("stationSubtitle");
 const stationFrequencyElement = document.getElementById("stationFrequency");
@@ -125,23 +126,47 @@ function setPlaybackState(nextState) {
   updatePlaybackUI();
 }
 
+function cleanStationText(value) {
+  if (value === null || value === undefined) {
+    return "";
+  }
+
+  return String(value).trim();
+}
+
+function getStationDetailMeta(station) {
+  const brand = cleanStationText(station?.brand);
+  const subtitle = cleanStationText(station?.subtitle);
+  const frequency = cleanStationText(station?.frequency);
+
+  if (brand && frequency) {
+    return `${brand} · ${frequency}`;
+  }
+
+  return subtitle || brand || frequency;
+}
+
 function updateStationUI(station) {
-  const brand = station?.brand ? String(station.brand).trim() : "";
-  const subtitle = station?.subtitle ? String(station.subtitle).trim() : "";
-  const frequency = station?.frequency ? String(station.frequency).trim() : "";
+  const name = cleanStationText(station?.name);
+  const brand = cleanStationText(station?.brand);
+  const frequency = cleanStationText(station?.frequency);
+  const detailMeta = getStationDetailMeta(station);
   const [brandLead = "", ...brandTextParts] = brand.split(/\s+/);
   const brandText = brandTextParts.join(" ");
   const showFrequencyInMark =
-    Boolean(frequency) && !subtitle.includes(frequency);
+    Boolean(frequency) && !detailMeta.includes(frequency);
 
-  stationNameElement.textContent = station?.name || "";
+  stationDetailElement.classList.toggle("has-station-logo", Boolean(brand));
+  stationMarkElement.hidden = !brand;
+  stationNameElement.textContent = name;
+  stationNameElement.hidden = !name;
   stationBrandLeadElement.textContent = brandLead;
   stationBrandLeadElement.hidden = !brandLead;
   stationBrandTextElement.textContent = brandText;
   stationBrandTextElement.hidden = !brandText;
   stationMarkElement.classList.toggle("has-long-brand", brandText.length > 7);
-  stationSubtitleElement.textContent = subtitle;
-  stationSubtitleElement.hidden = !subtitle;
+  stationSubtitleElement.textContent = detailMeta;
+  stationSubtitleElement.hidden = !detailMeta;
   stationFrequencyElement.textContent = showFrequencyInMark ? frequency : "";
   stationFrequencyElement.hidden = !showFrequencyInMark;
 }

@@ -113,7 +113,7 @@
       <div id="stationList" class="station-list" aria-label="電台列表"></div>
     </section>
 
-    <section id="playerView" class="player-card" hidden>
+    <section id="playerView" class="player-card" aria-labelledby="stationName" hidden>
       <div class="station-mark" aria-hidden="true">
         <strong id="stationBrandLead"></strong>
         <span id="stationBrandText"></span>
@@ -121,8 +121,9 @@
       </div>
 
       <div class="station-info">
-        <h1 id="stationName"></h1>
+        <h1 id="stationName" tabindex="-1"></h1>
         <p id="stationSubtitle" class="frequency"></p>
+        <p class="station-detail-status">目前電台</p>
 
         <p id="song" class="song" hidden></p>
 

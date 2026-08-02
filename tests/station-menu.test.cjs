@@ -21,7 +21,10 @@ test("the page defaults to the station-list home without a single-view flash", (
   assert.match(html, /aria-pressed="true"/);
   assert.match(html, /aria-controls="playerView stationListView"/);
   assert.match(html, /id="viewToggleText">目前電台<\/span>/);
-  assert.match(html, /<section id="playerView" class="player-card" hidden>/);
+  assert.match(
+    html,
+    /<section id="playerView" class="player-card" aria-labelledby="stationName" hidden>/
+  );
   assert.match(listViewTag, /aria-labelledby="stationListTitle"/);
   assert.doesNotMatch(listViewTag, /\bhidden\b/);
   assert.match(
@@ -151,6 +154,9 @@ test("view state switches three content views without controlling audio", () => 
 
   assert.match(viewScript, /stationList\.querySelector\("\.station-option"\)/);
   assert.doesNotMatch(viewScript, /listTitle\.focus\(\)/);
+  assert.match(viewScript, /const stationName = document\.getElementById\("stationName"\)/);
+  assert.match(viewScript, /\(showList \? toggleButton : stationName\)\.focus\(\)/);
+  assert.match(viewScript, /\{ focusToggle: true \}/);
   assert.match(viewScript, /showList \? "目前電台" : "所有電台"/);
   assert.match(viewScript, /showList \? "顯示目前電台" : "顯示所有電台"/);
   assert.match(viewScript, /event\.key !== "Escape"/);
