@@ -17,6 +17,24 @@
 </head>
 <body>
   <main class="app" aria-label="Easy Radio 網路廣播機">
+    <button
+      id="settingsButton"
+      class="settings-button"
+      type="button"
+      aria-label="設定"
+      aria-controls="settingsView"
+    >
+      <svg
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <path
+          d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.09a2 2 0 0 1 1 1.73v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.51a2 2 0 0 1 1-1.73l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"
+        ></path>
+        <circle cx="12" cy="12" r="3"></circle>
+      </svg>
+    </button>
     <header class="topbar">
       <button
         id="viewToggleButton"
@@ -30,13 +48,33 @@
         <span id="viewToggleText">所有電台</span>
       </button>
 
-      <div class="clock">
-        <div id="date">----/--/--</div>
-        <div id="time">--:--</div>
-      </div>
+      <button
+        id="settingsBackButton"
+        class="settings-back-button"
+        type="button"
+        hidden
+      >
+        <span aria-hidden="true">←</span>
+        <span>返回</span>
+      </button>
     </header>
 
     <div class="main-content">
+      <section
+        id="settingsView"
+        class="settings-view"
+        aria-labelledby="settingsTitle"
+        hidden
+      >
+        <h1 id="settingsTitle" tabindex="-1">設定</h1>
+        <p class="settings-empty-state">目前尚無可調整的設定</p>
+
+        <footer class="settings-version">
+          <strong>Easy Radio</strong>
+          <span id="versionText"></span>
+          <span id="buildText"></span>
+        </footer>
+      </section>
     <section
       id="stationListView"
       class="station-list-view"
@@ -96,10 +134,6 @@
     </section>
     </div>
 
-    <footer class="footer">
-      <span id="versionText"></span>
-      <span id="buildText"></span>
-    </footer>
 
     <div class="playback-controls shared-playback-controls floating-playback-bar">
       <div class="playback-activity-bars" aria-hidden="true">

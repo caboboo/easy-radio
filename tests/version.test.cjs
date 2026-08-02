@@ -19,7 +19,7 @@ test("version.js exposes the current Version and Build Number", () => {
 
   assert.match(releaseInfo.version, /^v\d+\.\d+$/);
   assert.equal(releaseInfo.version, "v0.3");
-  assert.equal(releaseInfo.build, 11);
+  assert.equal(releaseInfo.build, 12);
   assert.ok(Number.isInteger(releaseInfo.build));
   assert.ok(releaseInfo.build >= 1);
   assert.ok(Object.isFrozen(releaseInfo));
@@ -31,6 +31,11 @@ test("the page displays Version and Build separately", () => {
 
   assert.match(html, /id="versionText"><\/span>/);
   assert.match(html, /id="buildText"><\/span>/);
+  const settingsView =
+    html.match(/<section[\s\S]*?id="settingsView"[\s\S]*?<\/section>/)?.[0] || "";
+  assert.match(settingsView, /id="versionText"/);
+  assert.match(settingsView, /id="buildText"/);
+  assert.doesNotMatch(html, /<footer class="footer">/);
   assert.match(script, /`Version \$\{version\}`/);
   assert.match(script, /`Build \$\{String\(build\)\.padStart\(3, "0"\)\}`/);
   assert.ok(

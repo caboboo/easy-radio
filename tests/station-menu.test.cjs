@@ -22,38 +22,55 @@ test("the page defaults to a single-player view with a valid mode toggle", () =>
     html,
     /id="stationListView"[\s\S]*?aria-labelledby="stationListTitle"[\s\S]*?hidden/
   );
+  assert.match(
+    html,
+    /id="settingsView"[\s\S]*?aria-labelledby="settingsTitle"[\s\S]*?hidden/
+  );
   assert.match(html, /id="stationListTitle">選擇電台<\/h1>/);
 });
 
-test("one control set floats at page bottom outside both views", () => {
-  const topbar = html.match(/<header class="topbar">([\s\S]*?)<\/header>/)?.[1] || "";
-  const floatingBar = html.match(
-    /<div class="playback-controls shared-playback-controls floating-playback-bar">[\s\S]*?(?=<audio id="radio")/
-  )?.[0] || "";
-  const playerView = html.match(/<section id="playerView"[\s\S]*?<\/section>/)?.[0] || "";
-  const listView = html.match(/<section[\s\S]*?id="stationListView"[\s\S]*?<\/section>/)?.[0] || "";
+test("one control set floats at page bottom outside all three views", () => {
+  const topbar =
+    html.match(/<header class="topbar">([\s\S]*?)<\/header>/)?.[1] || "";
+  const floatingBar =
+    html.match(
+      /<div class="playback-controls shared-playback-controls floating-playback-bar">[\s\S]*?(?=<audio id="radio")/
+    )?.[0] || "";
+  const playerView =
+    html.match(/<section id="playerView"[\s\S]*?<\/section>/)?.[0] || "";
+  const listView =
+    html.match(
+      /<section[\s\S]*?id="stationListView"[\s\S]*?<\/section>/
+    )?.[0] || "";
+  const settingsView =
+    html.match(/<section[\s\S]*?id="settingsView"[\s\S]*?<\/section>/)?.[0] ||
+    "";
 
-  assert.doesNotMatch(topbar, /playButton|volumeSlider|muteButton/);
+  assert.doesNotMatch(topbar, /playButton|volumeSlider|muteButton|class="clock"/);
   assert.match(topbar, /id="viewToggleButton"/);
-  assert.match(topbar, /class="clock"/);
-  assert.ok(
-    topbar.indexOf('id="viewToggleButton"') < topbar.indexOf('class="clock"')
-  );
+  assert.match(topbar, /id="settingsBackButton"/);
   assert.match(
     styles,
-    /\.topbar\s*\{[\s\S]*?display: grid;[\s\S]*?align-items: center;[\s\S]*?justify-content: space-between;/
+    /\.topbar\s*\{[\s\S]*?display: flex;[\s\S]*?align-items: center;/
   );
   assert.match(floatingBar, /id="playButton"/);
   assert.match(floatingBar, /id="volumeSlider"/);
   assert.match(floatingBar, /id="muteButton"/);
   assert.doesNotMatch(playerView, /playButton|volumeSlider|muteButton/);
   assert.doesNotMatch(listView, /playButton|volumeSlider|muteButton/);
+  assert.doesNotMatch(settingsView, /playButton|volumeSlider|muteButton/);
   assert.equal((html.match(/id="playButton"/g) || []).length, 1);
   assert.equal((html.match(/id="volumeSlider"/g) || []).length, 1);
   assert.equal((html.match(/id="muteButton"/g) || []).length, 1);
   assert.equal((html.match(/<audio\b/g) || []).length, 1);
-  assert.ok(html.indexOf('<footer class="footer">') < html.indexOf('floating-playback-bar'));
-  assert.ok(html.indexOf('floating-playback-bar') < html.indexOf('<audio id="radio"'));
+  assert.ok(
+    html.indexOf('class="settings-version"') <
+      html.indexOf("floating-playback-bar")
+  );
+  assert.ok(
+    html.indexOf("floating-playback-bar") <
+      html.indexOf('<audio id="radio"')
+  );
   assert.match(
     styles,
     /\.floating-playback-bar\s*\{[\s\S]*?position: fixed;[\s\S]*?bottom: calc\(12px \+ env\(safe-area-inset-bottom\)\);[\s\S]*?max-width: 880px;/
@@ -62,16 +79,15 @@ test("one control set floats at page bottom outside both views", () => {
     styles,
     /\.app\s*\{[\s\S]*?calc\(128px \+ env\(safe-area-inset-bottom\)\)/
   );
-  assert.doesNotMatch(styles, /\.footer\s*\{\s*display: none;/);
 });
 
 test("an empty song stays available but takes no visible space", () => {
   assert.match(html, /<p id="song" class="song" hidden><\/p>/);
-  assert.doesNotMatch(html, /目前曲目：電台未提供|電台未提供/);
+  assert.doesNotMatch(html, /目前曲目：電台未提供|電台未提供曲目/);
   assert.match(styles, /\[hidden\]\s*\{[\s\S]*?display: none !important/);
 });
 
-test("the former drawer, overlay, close button, and scroll lock are removed", () => {
+test("the former drawer, overlay, close button, and scroll lock stay removed", () => {
   assert.doesNotMatch(
     html,
     /stationOverlay|stationPanel|stationCloseButton|aria-modal|aria-expanded/
@@ -86,12 +102,14 @@ test("the former drawer, overlay, close button, and scroll lock are removed", ()
   );
 });
 
-test("view state switches content and labels without controlling audio", () => {
+test("view state switches three content views without controlling audio", () => {
   assert.match(viewScript, /SINGLE: "single"/);
   assert.match(viewScript, /LIST: "list"/);
+  assert.match(viewScript, /SETTINGS: "settings"/);
   assert.match(viewScript, /let displayMode = DisplayMode\.SINGLE/);
-  assert.match(viewScript, /playerView\.hidden = showList/);
+  assert.match(viewScript, /playerView\.hidden = displayMode !== DisplayMode\.SINGLE/);
   assert.match(viewScript, /listView\.hidden = !showList/);
+  assert.match(viewScript, /settingsView\.hidden = !showSettings/);
 
   assert.match(viewScript, /stationList\.querySelector\("\.station-option"\)/);
   assert.doesNotMatch(viewScript, /listTitle\.focus\(\)/);
@@ -104,9 +122,10 @@ test("view state switches content and labels without controlling audio", () => {
 });
 
 test("station cards remain accessible and selection stays in the list view", () => {
-  const selectionHandler = viewScript.match(
-    /function handleStationListClick\(event\) \{([\s\S]*?)\n  \}/
-  )?.[1] || "";
+  const selectionHandler =
+    viewScript.match(
+      /function handleStationListClick\(event\) \{([\s\S]*?)\n  \}/
+    )?.[1] || "";
 
   assert.match(viewScript, /document\.createElement\("button"\)/);
   assert.match(viewScript, /option\.type = "button"/);

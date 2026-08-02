@@ -3,14 +3,20 @@
 
   const DisplayMode = Object.freeze({
     SINGLE: "single",
-    LIST: "list"
+    LIST: "list",
+    SETTINGS: "settings"
   });
 
   const toggleButton = document.getElementById("viewToggleButton");
   const toggleIcon = document.getElementById("viewToggleIcon");
   const toggleText = document.getElementById("viewToggleText");
+  const settingsButton = document.getElementById("settingsButton");
+  const settingsBackButton = document.getElementById("settingsBackButton");
+  const mainContent = document.querySelector(".main-content");
   const playerView = document.getElementById("playerView");
   const listView = document.getElementById("stationListView");
+  const settingsView = document.getElementById("settingsView");
+  const settingsTitle = document.getElementById("settingsTitle");
   const listTitle = document.getElementById("stationListTitle");
   const searchSection = document.getElementById("stationSearchSection");
   const searchInput = document.getElementById("stationSearch");
@@ -25,13 +31,19 @@
     window.EasyRadioStationSearch?.shouldShowStationSearch;
   const player = window.EasyRadioPlayer;
   let displayMode = DisplayMode.SINGLE;
+  let previousDisplayMode = DisplayMode.SINGLE;
 
   if (
     !toggleButton ||
     !toggleIcon ||
     !toggleText ||
+    !settingsButton ||
+    !settingsBackButton ||
+    !mainContent ||
     !playerView ||
     !listView ||
+    !settingsView ||
+    !settingsTitle ||
     !listTitle ||
     !searchSection ||
     !searchInput ||
@@ -181,16 +193,25 @@
     stationList.append(fragment);
   }
 
-  function setDisplayMode(nextMode, { focusToggle = false } = {}) {
+  function setDisplayMode(
+    nextMode,
+    { focusToggle = false, focusSettingsButton = false } = {}
+  ) {
     if (!Object.values(DisplayMode).includes(nextMode)) {
       return;
     }
 
     displayMode = nextMode;
     const showList = displayMode === DisplayMode.LIST;
+    const showSettings = displayMode === DisplayMode.SETTINGS;
 
-    playerView.hidden = showList;
+    playerView.hidden = displayMode !== DisplayMode.SINGLE;
     listView.hidden = !showList;
+    settingsView.hidden = !showSettings;
+    toggleButton.hidden = showSettings;
+    settingsBackButton.hidden = !showSettings;
+    settingsButton.hidden = showSettings;
+    mainContent.classList.toggle("is-settings-view", showSettings);
     toggleButton.setAttribute("aria-pressed", String(showList));
     toggleButton.setAttribute(
       "aria-label",
@@ -201,6 +222,13 @@
 
     if (showList) {
       renderStations();
+    }
+
+    if (showSettings) {
+      settingsBackButton.focus();
+    } else if (focusSettingsButton) {
+      settingsButton.focus();
+    } else if (showList) {
       const firstStation = stationList.querySelector(".station-option");
       (firstStation || toggleButton).focus();
     } else if (focusToggle) {
@@ -209,12 +237,45 @@
   }
 
   function toggleDisplayMode() {
+    if (displayMode === DisplayMode.SETTINGS) {
+      return;
+    }
+
     setDisplayMode(
       displayMode === DisplayMode.SINGLE
         ? DisplayMode.LIST
         : DisplayMode.SINGLE,
       { focusToggle: displayMode === DisplayMode.LIST }
     );
+  }
+
+  function openSettings() {
+    if (
+      displayMode !== DisplayMode.SINGLE &&
+      displayMode !== DisplayMode.LIST
+    ) {
+      return;
+    }
+
+    previousDisplayMode = displayMode;
+    setDisplayMode(DisplayMode.SETTINGS);
+  }
+
+  function getSettingsReturnMode() {
+    return previousDisplayMode === DisplayMode.LIST ||
+      previousDisplayMode === DisplayMode.SINGLE
+      ? previousDisplayMode
+      : DisplayMode.SINGLE;
+  }
+
+  function returnFromSettings() {
+    if (displayMode !== DisplayMode.SETTINGS) {
+      return;
+    }
+
+    setDisplayMode(getSettingsReturnMode(), {
+      focusSettingsButton: true
+    });
   }
 
   function handleStationListClick(event) {
@@ -230,15 +291,25 @@
   }
 
   function handleDocumentKeydown(event) {
-    if (event.key !== "Escape" || displayMode !== DisplayMode.LIST) {
+    if (event.key !== "Escape") {
       return;
     }
 
-    event.preventDefault();
-    setDisplayMode(DisplayMode.SINGLE, { focusToggle: true });
+    if (displayMode === DisplayMode.SETTINGS) {
+      event.preventDefault();
+      returnFromSettings();
+      return;
+    }
+
+    if (displayMode === DisplayMode.LIST) {
+      event.preventDefault();
+      setDisplayMode(DisplayMode.SINGLE, { focusToggle: true });
+    }
   }
 
   toggleButton.addEventListener("click", toggleDisplayMode);
+  settingsButton.addEventListener("click", openSettings);
+  settingsBackButton.addEventListener("click", returnFromSettings);
   stationList.addEventListener("click", handleStationListClick);
   searchInput.addEventListener("input", renderStations);
   clearButton.addEventListener("click", () => {

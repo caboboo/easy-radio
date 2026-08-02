@@ -5,8 +5,6 @@ const playbackControls = document.querySelector(".floating-playback-bar");
 const playIcon = document.getElementById("playIcon");
 const playText = document.getElementById("playText");
 const statusText = document.getElementById("statusText");
-const dateElement = document.getElementById("date");
-const timeElement = document.getElementById("time");
 const desktopVolume = document.getElementById("desktopVolume");
 const volumeSlider = document.getElementById("volumeSlider");
 const volumeText = document.getElementById("volumeText");
@@ -52,32 +50,6 @@ let lastPlayingTime = 0;
 let volumeBeforeMute = 1;
 let volumeAtSliderStart = 1;
 let currentStation = stations[0] || null;
-
-const dateFormatter = new Intl.DateTimeFormat("zh-TW", {
-  year: "numeric",
-  month: "2-digit",
-  day: "2-digit",
-  weekday: "short"
-});
-const timeFormatter = new Intl.DateTimeFormat("zh-TW", {
-  hour: "2-digit",
-  minute: "2-digit",
-  hour12: false
-});
-
-function updateClock() {
-  const now = new Date();
-  const nextDate = dateFormatter.format(now);
-  const nextTime = timeFormatter.format(now);
-
-  if (dateElement.textContent !== nextDate) {
-    dateElement.textContent = nextDate;
-  }
-
-  if (timeElement.textContent !== nextTime) {
-    timeElement.textContent = nextTime;
-  }
-}
 
 function initializeVersionDisplay() {
   const version = releaseInfo?.version;
@@ -758,16 +730,9 @@ window.EasyRadioPlayer = Object.freeze({
 initializeCurrentStation();
 initializeVolumeControls();
 initializeVersionDisplay();
-updateClock();
 updatePlaybackUI();
 
 if (!navigator.onLine) {
   playbackStateBeforeOffline = PlaybackState.READY;
   setPlaybackState(PlaybackState.OFFLINE);
 }
-
-const millisecondsUntilNextMinute = 60000 - (Date.now() % 60000);
-setTimeout(() => {
-  updateClock();
-  setInterval(updateClock, 60000);
-}, millisecondsUntilNextMinute);
