@@ -6,6 +6,7 @@
     LIST: "list",
     SETTINGS: "settings"
   });
+  const KEYBOARD_FOCUS_CLASS = "uses-keyboard-navigation";
 
   const toggleButton = document.getElementById("viewToggleButton");
   const toggleIcon = document.getElementById("viewToggleIcon");
@@ -217,8 +218,8 @@
       "aria-label",
       showSettings ? "關閉設定" : "設定"
     );
-    settingsGearIcon.hidden = showSettings;
-    settingsCloseIcon.hidden = !showSettings;
+    settingsGearIcon.toggleAttribute("hidden", showSettings);
+    settingsCloseIcon.toggleAttribute("hidden", !showSettings);
     mainContent.classList.toggle("is-settings-view", showSettings);
     toggleButton.setAttribute("aria-pressed", String(showList));
     toggleButton.setAttribute(
@@ -238,10 +239,18 @@
       settingsButton.focus();
     } else if (focusToggle) {
       (showList ? toggleButton : stationName).focus();
-    } else if (showList) {
-      const firstStation = stationList.querySelector(".station-option");
-      (firstStation || toggleButton).focus();
     }
+  }
+
+  function setKeyboardFocusVisibility(isKeyboardNavigation) {
+    document.documentElement.classList.toggle(
+      KEYBOARD_FOCUS_CLASS,
+      isKeyboardNavigation
+    );
+  }
+
+  function handleDocumentPointerdown() {
+    setKeyboardFocusVisibility(false);
   }
 
   function toggleDisplayMode() {
@@ -308,6 +317,8 @@
   }
 
   function handleDocumentKeydown(event) {
+    setKeyboardFocusVisibility(true);
+
     if (event.key !== "Escape") {
       return;
     }
@@ -329,6 +340,7 @@
     searchInput.focus();
   });
   document.addEventListener("keydown", handleDocumentKeydown);
+  document.addEventListener("pointerdown", handleDocumentPointerdown);
   document.addEventListener("easy-radio:station-change", renderStations);
 
   setDisplayMode(DisplayMode.LIST);

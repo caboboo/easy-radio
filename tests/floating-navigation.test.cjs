@@ -54,8 +54,14 @@ test("settings swaps the same button between gear and close behavior", () => {
     viewScript,
     /showSettings \? "關閉設定" : "設定"/
   );
-  assert.match(viewScript, /settingsGearIcon\.hidden = showSettings/);
-  assert.match(viewScript, /settingsCloseIcon\.hidden = !showSettings/);
+  assert.match(
+    viewScript,
+    /settingsGearIcon\.toggleAttribute\("hidden", showSettings\)/
+  );
+  assert.match(
+    viewScript,
+    /settingsCloseIcon\.toggleAttribute\("hidden", !showSettings\)/
+  );
   assert.match(
     viewScript,
     /previousDisplayMode === DisplayMode\.LIST \|\|[\s\S]*?: DisplayMode\.LIST/
@@ -72,7 +78,28 @@ test("settings swaps the same button between gear and close behavior", () => {
     (viewScript.match(/document\.addEventListener\("keydown"/g) || []).length,
     1
   );
+  assert.equal(
+    (viewScript.match(/document\.addEventListener\("pointerdown"/g) || []).length,
+    1
+  );
   assert.doesNotMatch(viewScript, /settingsBackButton/);
+});
+
+test("pointer focus stays quiet while keyboard focus remains visible", () => {
+  assert.match(viewScript, /const KEYBOARD_FOCUS_CLASS = "uses-keyboard-navigation"/);
+  assert.match(
+    viewScript,
+    /document\.documentElement\.classList\.toggle\([\s\S]*?KEYBOARD_FOCUS_CLASS,[\s\S]*?isKeyboardNavigation/
+  );
+  assert.match(
+    styles,
+    /html\.uses-keyboard-navigation \.settings-button:focus,[\s\S]*?outline: 4px solid #1267c4;/
+  );
+  assert.match(
+    styles,
+    /#stationName:focus,[\s\S]*?html:not\(\.uses-keyboard-navigation\) \.settings-button:focus,[\s\S]*?outline: none;/
+  );
+  assert.doesNotMatch(styles, /(^|\n)\s*\*:focus\s*\{[\s\S]*?outline:\s*none/);
 });
 
 test("navigation code remains independent from audio and station selection", () => {

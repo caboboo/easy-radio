@@ -152,7 +152,10 @@ test("view state switches three content views without controlling audio", () => 
   assert.match(viewScript, /listView\.hidden = !showList/);
   assert.match(viewScript, /settingsView\.hidden = !showSettings/);
 
-  assert.match(viewScript, /stationList\.querySelector\("\.station-option"\)/);
+  assert.doesNotMatch(
+    viewScript,
+    /stationList\.querySelector\("\.station-option"\)[\s\S]*?\.focus\(\)/
+  );
   assert.doesNotMatch(viewScript, /listTitle\.focus\(\)/);
   assert.match(viewScript, /const stationName = document\.getElementById\("stationName"\)/);
   assert.match(viewScript, /\(showList \? toggleButton : stationName\)\.focus\(\)/);

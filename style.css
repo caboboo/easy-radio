@@ -406,14 +406,23 @@ button {
 .volume-slider:focus-visible,
 .mute-button:focus-visible,
 .play-button:focus-visible,
-#stationName:focus,
 .view-toggle-button:focus-visible,
 .settings-button:focus-visible,
 .station-search-clear:focus-visible,
 .station-search input:focus-visible,
-.station-option:focus-visible {
+.station-option:focus-visible,
+html.uses-keyboard-navigation .view-toggle-button:focus,
+html.uses-keyboard-navigation .settings-button:focus,
+html.uses-keyboard-navigation .station-option:focus {
   outline: 4px solid #1267c4;
   outline-offset: 3px;
+}
+
+#stationName:focus,
+html:not(.uses-keyboard-navigation) .view-toggle-button:focus,
+html:not(.uses-keyboard-navigation) .settings-button:focus,
+html:not(.uses-keyboard-navigation) .station-option:focus {
+  outline: none;
 }
 
 .player-card {

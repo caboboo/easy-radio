@@ -116,8 +116,14 @@ test("one settings button swaps icon, label, action, and focus", () => {
     viewScript,
     /showSettings \? "關閉設定" : "設定"/
   );
-  assert.match(viewScript, /settingsGearIcon\.hidden = showSettings/);
-  assert.match(viewScript, /settingsCloseIcon\.hidden = !showSettings/);
+  assert.match(
+    viewScript,
+    /settingsGearIcon\.toggleAttribute\("hidden", showSettings\)/
+  );
+  assert.match(
+    viewScript,
+    /settingsCloseIcon\.toggleAttribute\("hidden", !showSettings\)/
+  );
   assert.match(viewScript, /if \(showSettings\) \{[\s\S]*?settingsButton\.focus\(\)/);
   assert.match(viewScript, /settingsButton\.addEventListener\("click", handleSettingsButtonClick\)/);
   assert.equal(
