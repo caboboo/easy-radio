@@ -93,7 +93,7 @@ test("pointer focus stays quiet while keyboard focus remains visible", () => {
   );
   assert.match(
     styles,
-    /html\.uses-keyboard-navigation \.settings-button:focus,[\s\S]*?outline: 4px solid #1267c4;/
+    /html\.uses-keyboard-navigation \.settings-button:focus\s*\{[\s\S]*?outline: 4px solid #1267c4;/
   );
   assert.match(
     styles,

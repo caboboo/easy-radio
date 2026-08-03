@@ -200,6 +200,33 @@ test("station cards remain accessible and selection stays in the list view", () 
   assert.doesNotMatch(viewScript, /station-type-label|station-action-label/);
 });
 
+test("selected station card uses restrained neutral selection styling", () => {
+  const selectedCardStyles =
+    styles.match(
+      /\.station-option\[aria-pressed="true"\]\s*\{([\s\S]*?)\}/
+    )?.[1] || "";
+  const currentLabelStyles =
+    styles.match(/\.current-station-label\s*\{([\s\S]*?)\}/)?.[1] || "";
+
+  assert.match(styles, /\.station-list\s*\{[\s\S]*?grid-auto-rows: 1fr;/);
+  assert.match(selectedCardStyles, /border-color: #5b4634;/);
+  assert.match(selectedCardStyles, /background: #fff8eb;/);
+  assert.match(
+    selectedCardStyles,
+    /box-shadow: inset 0 0 0 1px rgba\(91, 70, 52, 0\.1\);/
+  );
+  assert.doesNotMatch(selectedCardStyles, /#9b241b|var\(--red\)|var\(--green\)/);
+  assert.match(currentLabelStyles, /background: #f1e5d1;/);
+  assert.match(currentLabelStyles, /color: #5b4634;/);
+  assert.match(currentLabelStyles, /pointer-events: none;/);
+  assert.doesNotMatch(currentLabelStyles, /#267d31|var\(--red\)|var\(--green\)/);
+  assert.match(
+    styles,
+    /\.station-option:focus-visible,[\s\S]*?outline: 3px solid #5b4634;/
+  );
+  assert.match(viewScript, /"✓ 目前電台"/);
+});
+
 test("search stays hidden below six stations in the main list view", () => {
   assert.match(
     html,
