@@ -1075,6 +1075,9 @@ html:not(.uses-keyboard-navigation) .station-option:focus {
     bottom: calc(12px + env(safe-area-inset-bottom));
     overflow: hidden;
     touch-action: pan-y;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
   }
 
   .playback-primary-controls {
@@ -1088,6 +1091,7 @@ html:not(.uses-keyboard-navigation) .station-option:focus {
     transform: translate3d(var(--mobile-drawer-offset), 0, 0);
     transition: transform 220ms ease-out;
     will-change: transform;
+    touch-action: pan-y;
   }
 
   .floating-playback-bar.is-settings-revealed {
@@ -1130,6 +1134,15 @@ html:not(.uses-keyboard-navigation) .station-option:focus {
   .playback-primary-controls .play-button,
   .playback-primary-controls .settings-button {
     touch-action: pan-y;
+  }
+
+  .playback-primary-controls .view-toggle-icon,
+  .playback-primary-controls .view-toggle-icon *,
+  .playback-primary-controls .settings-icon,
+  .playback-primary-controls .settings-icon *,
+  .playback-primary-controls .play-icon,
+  .playback-primary-controls #playText {
+    pointer-events: none;
   }
 }
 

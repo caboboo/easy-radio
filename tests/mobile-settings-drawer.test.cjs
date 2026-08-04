@@ -166,6 +166,74 @@ test("a drag suppresses only its click and settings remains locked in place", ()
   );
 });
 
+test("the mobile control viewport captures pointer sequences from control buttons", () => {
+  assert.match(
+    viewScript,
+    /playbackBar\.addEventListener\("pointerdown", handleDrawerPointerDown, \{\s*capture: true\s*\}\);/
+  );
+  assert.match(
+    viewScript,
+    /playbackBar\.addEventListener\("pointermove", handleDrawerPointerMove, \{\s*capture: true,\s*passive: false\s*\}\);/
+  );
+  assert.match(
+    viewScript,
+    /playbackBar\.addEventListener\("pointerup", handleDrawerPointerUp, \{\s*capture: true\s*\}\);/
+  );
+  assert.match(
+    viewScript,
+    /playbackBar\.addEventListener\("pointercancel", cancelDrawerGesture, \{\s*capture: true\s*\}\);/
+  );
+  assert.match(viewScript, /originTarget: event\.target/);
+  assert.match(
+    viewScript,
+    /originButton: event\.target\.closest\?\.\("button"\) \|\| null/
+  );
+  assert.doesNotMatch(
+    viewScript,
+    /if \([^)]*(?:closest\(["']button["']\)|tagName)[^)]*\)\s*\{?\s*return;/
+  );
+});
+
+test("pointer capture starts only after a horizontal drag is confirmed", () => {
+  const pointerDown =
+    viewScript.match(
+      /function handleDrawerPointerDown\(event\) \{[\s\S]*?(?=\n  function handleDrawerPointerMove)/
+    )?.[0] || "";
+  const pointerMove =
+    viewScript.match(
+      /function handleDrawerPointerMove\(event\) \{[\s\S]*?(?=\n  function finishDrawerGesture)/
+    )?.[0] || "";
+
+  assert.doesNotMatch(pointerDown, /setPointerCapture/);
+  assert.match(
+    pointerMove,
+    /drawerGesture\.direction = "horizontal";[\s\S]*?drawerGesture\.dragging = true;[\s\S]*?setPointerCapture\(event\.pointerId\)/
+  );
+});
+
+test("mobile control descendants share touch handling and decorative targets do not intercept pointers", () => {
+  assert.match(
+    mobileStyles,
+    /\.floating-playback-bar \{[\s\S]*?touch-action: pan-y;[\s\S]*?user-select: none;[\s\S]*?-webkit-user-select: none;[\s\S]*?-webkit-touch-callout: none;/
+  );
+  assert.match(
+    mobileStyles,
+    /\.playback-primary-controls \{[\s\S]*?touch-action: pan-y;/
+  );
+  assert.match(
+    mobileStyles,
+    /\.playback-primary-controls \.view-toggle-button,[\s\S]*?\.playback-primary-controls \.settings-button \{\s*touch-action: pan-y;\s*\}/
+  );
+  assert.match(
+    mobileStyles,
+    /\.playback-primary-controls \.view-toggle-icon,[\s\S]*?\.playback-primary-controls #playText \{\s*pointer-events: none;\s*\}/
+  );
+  assert.doesNotMatch(
+    styles,
+    /(?:^|\n)\s*(?:svg|span)\s*\{[\s\S]*?pointer-events: none;/
+  );
+});
+
 test("offscreen mobile controls leave Tab and accessibility navigation", () => {
   assert.match(viewScript, /element\.setAttribute\("aria-hidden", "true"\)/);
   assert.match(viewScript, /element\.setAttribute\("inert", ""\)/);

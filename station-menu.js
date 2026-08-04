@@ -555,6 +555,8 @@
     suppressNextDrawerClick = false;
     drawerGesture = {
       pointerId: event.pointerId,
+      originTarget: event.target,
+      originButton: event.target.closest?.("button") || null,
       startX: event.clientX,
       startY: event.clientY,
       startOffset,
@@ -740,12 +742,19 @@
   toggleButton.addEventListener("click", toggleDisplayMode);
   settingsButton.addEventListener("click", handleSettingsButtonClick);
   playbackBar.addEventListener("click", handleDrawerClickCapture, true);
-  playbackBar.addEventListener("pointerdown", handleDrawerPointerDown);
+  playbackBar.addEventListener("pointerdown", handleDrawerPointerDown, {
+    capture: true
+  });
   playbackBar.addEventListener("pointermove", handleDrawerPointerMove, {
+    capture: true,
     passive: false
   });
-  playbackBar.addEventListener("pointerup", handleDrawerPointerUp);
-  playbackBar.addEventListener("pointercancel", cancelDrawerGesture);
+  playbackBar.addEventListener("pointerup", handleDrawerPointerUp, {
+    capture: true
+  });
+  playbackBar.addEventListener("pointercancel", cancelDrawerGesture, {
+    capture: true
+  });
   playbackBar.addEventListener("lostpointercapture", cancelDrawerGesture);
   controlTrack.addEventListener("transitionend", handleDrawerTransitionEnd);
   stationList.addEventListener("click", handleStationListClick);
