@@ -11,7 +11,7 @@ const viewScript = fs.readFileSync(
 );
 const styles = fs.readFileSync(path.join(projectRoot, "style.css"), "utf8");
 
-test("the bottom player uses one action-oriented mode button and the top keeps one settings button", () => {
+test("the bottom player owns one mode button and the shared settings button", () => {
   const floatingBar =
     html.match(
       /<div class="playback-controls shared-playback-controls floating-playback-bar">[\s\S]*?(?=<audio id="radio")/
@@ -19,7 +19,7 @@ test("the bottom player uses one action-oriented mode button and the top keeps o
 
   assert.equal((html.match(/id="viewToggleButton"/g) || []).length, 1);
   assert.equal((html.match(/id="settingsButton"/g) || []).length, 1);
-  assert.match(floatingBar, /id="viewToggleButton"[\s\S]*?id="playButton"/);
+  assert.match(floatingBar, /id="viewToggleButton"[\s\S]*?id="playButton"[\s\S]*?id="settingsButton"/);
   assert.match(floatingBar, /aria-label="切換到目前電台"/);
   assert.match(floatingBar, /id="viewSingleIcon"[\s\S]*?focusable="false"/);
   assert.match(floatingBar, /id="viewListIcon"[\s\S]*?focusable="false"[\s\S]*?hidden/);
@@ -32,7 +32,7 @@ test("the bottom player uses one action-oriented mode button and the top keeps o
   assert.doesNotMatch(html, /⚙|⚙️|❌|✕/);
 });
 
-test("the mode button stays in normal player flow while top settings keeps safe-area offsets", () => {
+test("the mode button stays in normal player flow while desktop settings keeps safe-area offsets", () => {
   const modeButtonStyles =
     styles.match(/\.view-toggle-button\s*\{([\s\S]*?)\}/)?.[1] || "";
 

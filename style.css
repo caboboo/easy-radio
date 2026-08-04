@@ -1067,14 +1067,78 @@ html:not(.uses-keyboard-navigation) .station-option:focus {
   }
 
   .floating-playback-bar {
+    --mobile-control-size: 52px;
+    --mobile-control-gap: 10px;
+    --mobile-drawer-offset: 0px;
     left: max(8px, env(safe-area-inset-left));
     right: max(8px, env(safe-area-inset-right));
     bottom: calc(12px + env(safe-area-inset-bottom));
+    overflow: hidden;
+    touch-action: pan-y;
   }
 
+  .playback-primary-controls {
+    display: grid;
+    grid-template-columns:
+      var(--mobile-control-size)
+      minmax(0, 1fr)
+      var(--mobile-control-size);
+    column-gap: var(--mobile-control-gap);
+    width: calc(100% + var(--mobile-control-size) + var(--mobile-control-gap));
+    transform: translate3d(var(--mobile-drawer-offset), 0, 0);
+    transition: transform 220ms ease-out;
+    will-change: transform;
+  }
+
+  .floating-playback-bar.is-settings-revealed {
+    --mobile-drawer-offset: calc(
+      -1 * (var(--mobile-control-size) + var(--mobile-control-gap))
+    );
+  }
+
+  .floating-playback-bar.is-drawer-dragging .playback-primary-controls {
+    transition: none;
+  }
+
+  .playback-primary-controls .view-toggle-button {
+    grid-column: 1;
+  }
+
+  .playback-primary-controls .play-button {
+    grid-column: 2;
+  }
+
+  .playback-primary-controls .settings-button {
+    position: static;
+    grid-column: 3;
+    width: var(--mobile-control-size);
+    min-height: var(--mobile-control-size);
+    padding: 10px;
+    z-index: auto;
+    box-shadow: none;
+  }
+
+  .floating-playback-bar.is-settings-revealed .settings-button {
+    box-shadow: 0 5px 12px rgba(61, 35, 15, 0.28);
+  }
+
+  .floating-playback-bar.is-settings-revealed .view-toggle-button {
+    box-shadow: none;
+  }
+
+  .playback-primary-controls .view-toggle-button,
+  .playback-primary-controls .play-button,
+  .playback-primary-controls .settings-button {
+    touch-action: pan-y;
+  }
 }
 
 @media (max-width: 480px) and (orientation: portrait) {
+  .floating-playback-bar {
+    --mobile-control-size: 48px;
+    --mobile-control-gap: 6px;
+  }
+
   .shared-playback-controls {
     gap: 6px;
     padding: 5px;
@@ -1093,6 +1157,11 @@ html:not(.uses-keyboard-navigation) .station-option:focus {
     border-radius: 13px;
   }
 
+  .playback-primary-controls .settings-button {
+    padding: 9px;
+    border-radius: 13px;
+  }
+
   .play-button {
     min-height: 55px;
     border-bottom-width: 4px;
@@ -1103,6 +1172,8 @@ html:not(.uses-keyboard-navigation) .station-option:focus {
 
 @media (max-height: 500px) and (orientation: landscape) {
   .floating-playback-bar {
+    --mobile-control-size: 44px;
+    --mobile-control-gap: 5px;
     bottom: calc(10px + env(safe-area-inset-bottom));
   }
 
@@ -1122,6 +1193,16 @@ html:not(.uses-keyboard-navigation) .station-option:focus {
     min-height: 44px;
     padding: 8px;
     border-radius: 11px;
+  }
+
+  .playback-primary-controls .settings-button {
+    padding: 8px;
+    border-radius: 11px;
+  }
+
+  .playback-primary-controls .settings-icon {
+    width: 22px;
+    height: 22px;
   }
 
   .view-toggle-icon {
@@ -1152,6 +1233,10 @@ html:not(.uses-keyboard-navigation) .station-option:focus {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .playback-primary-controls {
+    transition: none;
+  }
+
   .playback-activity-bars {
     transition: none;
   }

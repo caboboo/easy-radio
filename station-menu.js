@@ -6,7 +6,17 @@
     LIST: "list",
     SETTINGS: "settings"
   });
+  const DrawerPosition = Object.freeze({
+    PRIMARY: "primary",
+    SETTINGS_REVEALED: "settings-revealed"
+  });
   const KEYBOARD_FOCUS_CLASS = "uses-keyboard-navigation";
+  const MOBILE_DRAWER_QUERY = "(max-width: 760px)";
+  const DRAWER_DIRECTION_THRESHOLD = 10;
+  const DRAWER_DIRECTION_RATIO = 1.15;
+  const DRAWER_SNAP_RATIO = 0.42;
+  const DRAWER_FAST_SWIPE_MIN_DISTANCE = 16;
+  const DRAWER_FAST_SWIPE_VELOCITY = 0.45;
 
   const toggleButton = document.getElementById("viewToggleButton");
   const singleViewIcon = document.getElementById("viewSingleIcon");
@@ -14,6 +24,8 @@
   const settingsButton = document.getElementById("settingsButton");
   const settingsGearIcon = document.getElementById("settingsGearIcon");
   const settingsCloseIcon = document.getElementById("settingsCloseIcon");
+  const playbackBar = document.querySelector(".floating-playback-bar");
+  const controlTrack = document.querySelector(".playback-primary-controls");
   const mainContent = document.querySelector(".main-content");
   const playerView = document.getElementById("playerView");
   const listView = document.getElementById("stationListView");
@@ -31,8 +43,14 @@
   const shouldShowStationSearch =
     window.EasyRadioStationSearch?.shouldShowStationSearch;
   const player = window.EasyRadioPlayer;
+  const mobileDrawerMedia = window.matchMedia(MOBILE_DRAWER_QUERY);
+  const drawerTabIndexes = new WeakMap();
   let displayMode = DisplayMode.LIST;
   let previousDisplayMode = DisplayMode.LIST;
+  let drawerPosition = DrawerPosition.PRIMARY;
+  let drawerGesture = null;
+  let drawerAvailabilityTimer = 0;
+  let suppressNextDrawerClick = false;
 
   if (
     !toggleButton ||
@@ -41,6 +59,8 @@
     !settingsButton ||
     !settingsGearIcon ||
     !settingsCloseIcon ||
+    !playbackBar ||
+    !controlTrack ||
     !mainContent ||
     !playerView ||
     !listView ||
@@ -194,6 +214,125 @@
     stationList.append(fragment);
   }
 
+  function isMobileDrawer() {
+    return mobileDrawerMedia.matches;
+  }
+
+  function setDrawerControlAvailability(element, isAvailable) {
+    if (isAvailable) {
+      element.removeAttribute("aria-hidden");
+      element.removeAttribute("inert");
+
+      if (drawerTabIndexes.has(element)) {
+        const previousTabIndex = drawerTabIndexes.get(element);
+
+        if (previousTabIndex === null) {
+          element.removeAttribute("tabindex");
+        } else {
+          element.setAttribute("tabindex", previousTabIndex);
+        }
+
+        drawerTabIndexes.delete(element);
+      }
+
+      return;
+    }
+
+    if (!drawerTabIndexes.has(element)) {
+      drawerTabIndexes.set(element, element.getAttribute("tabindex"));
+    }
+
+    element.setAttribute("aria-hidden", "true");
+    element.setAttribute("inert", "");
+    element.setAttribute("tabindex", "-1");
+  }
+
+  function updateDrawerControlAvailability() {
+    if (!isMobileDrawer()) {
+      setDrawerControlAvailability(toggleButton, true);
+      setDrawerControlAvailability(settingsButton, true);
+      return;
+    }
+
+    const showSettingsControl =
+      displayMode === DisplayMode.SETTINGS ||
+      drawerPosition === DrawerPosition.SETTINGS_REVEALED;
+    const showModeControl =
+      displayMode !== DisplayMode.SETTINGS &&
+      drawerPosition === DrawerPosition.PRIMARY;
+
+    setDrawerControlAvailability(toggleButton, showModeControl);
+    setDrawerControlAvailability(settingsButton, showSettingsControl);
+  }
+
+  function finishDrawerAvailabilityUpdate() {
+    if (drawerAvailabilityTimer) {
+      window.clearTimeout(drawerAvailabilityTimer);
+      drawerAvailabilityTimer = 0;
+    }
+
+    updateDrawerControlAvailability();
+  }
+
+  function setDrawerPosition(
+    nextPosition,
+    { deferAvailability = false } = {}
+  ) {
+    if (!Object.values(DrawerPosition).includes(nextPosition)) {
+      return;
+    }
+
+    if (drawerAvailabilityTimer) {
+      window.clearTimeout(drawerAvailabilityTimer);
+      drawerAvailabilityTimer = 0;
+    }
+
+    drawerPosition = nextPosition;
+    playbackBar.classList.remove("is-drawer-dragging");
+    playbackBar.classList.toggle(
+      "is-settings-revealed",
+      isMobileDrawer() &&
+        drawerPosition === DrawerPosition.SETTINGS_REVEALED
+    );
+    playbackBar.style.removeProperty("--mobile-drawer-offset");
+
+    if (
+      deferAvailability &&
+      isMobileDrawer() &&
+      !window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      drawerAvailabilityTimer = window.setTimeout(
+        finishDrawerAvailabilityUpdate,
+        260
+      );
+      return;
+    }
+
+    updateDrawerControlAvailability();
+  }
+
+  function getDrawerTravelDistance() {
+    const styles = window.getComputedStyle(playbackBar);
+    const controlSize = Number.parseFloat(
+      styles.getPropertyValue("--mobile-control-size")
+    );
+    const renderedModeWidth = toggleButton.getBoundingClientRect().width;
+    const gap = Number.parseFloat(
+      window.getComputedStyle(controlTrack).columnGap
+    );
+    const buttonWidth = Number.isFinite(controlSize) && controlSize > 0
+      ? controlSize
+      : renderedModeWidth;
+
+    return buttonWidth + (Number.isFinite(gap) ? gap : 0);
+  }
+
+  function getDrawerOffset() {
+    return drawerPosition === DrawerPosition.SETTINGS_REVEALED
+      ? -getDrawerTravelDistance()
+      : 0;
+  }
+
   function setDisplayMode(
     nextMode,
     { focusToggle = false, focusSettingsButton = false } = {}
@@ -224,6 +363,11 @@
     toggleButton.title = showList ? "目前電台" : "所有電台";
     singleViewIcon.toggleAttribute("hidden", !showList);
     listViewIcon.toggleAttribute("hidden", showList);
+    setDrawerPosition(
+      showSettings
+        ? DrawerPosition.SETTINGS_REVEALED
+        : DrawerPosition.PRIMARY
+    );
 
     if (showList) {
       renderStations();
@@ -232,7 +376,7 @@
     if (showSettings) {
       settingsButton.focus();
     } else if (focusSettingsButton) {
-      settingsButton.focus();
+      (isMobileDrawer() ? toggleButton : settingsButton).focus();
     } else if (focusToggle) {
       toggleButton.focus();
     }
@@ -326,8 +470,219 @@
     }
   }
 
+  function clampDrawerOffset(value, travelDistance) {
+    return Math.min(0, Math.max(-travelDistance, value));
+  }
+
+  function handleDrawerPointerDown(event) {
+    if (
+      !isMobileDrawer() ||
+      drawerGesture ||
+      event.isPrimary === false ||
+      (event.pointerType === "mouse" && event.button !== 0)
+    ) {
+      return;
+    }
+
+    suppressNextDrawerClick = false;
+    drawerGesture = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      startTime: window.performance.now(),
+      startOffset: getDrawerOffset(),
+      currentOffset: getDrawerOffset(),
+      direction: "pending",
+      dragging: false,
+      canMove: displayMode !== DisplayMode.SETTINGS
+    };
+  }
+
+  function handleDrawerPointerMove(event) {
+    if (!drawerGesture || event.pointerId !== drawerGesture.pointerId) {
+      return;
+    }
+
+    const deltaX = event.clientX - drawerGesture.startX;
+    const deltaY = event.clientY - drawerGesture.startY;
+    const absoluteX = Math.abs(deltaX);
+    const absoluteY = Math.abs(deltaY);
+
+    if (drawerGesture.direction === "pending") {
+      if (
+        Math.max(absoluteX, absoluteY) < DRAWER_DIRECTION_THRESHOLD
+      ) {
+        return;
+      }
+
+      if (absoluteY >= absoluteX * DRAWER_DIRECTION_RATIO) {
+        drawerGesture = null;
+        return;
+      }
+
+      if (absoluteX < absoluteY * DRAWER_DIRECTION_RATIO) {
+        return;
+      }
+
+      drawerGesture.direction = "horizontal";
+      drawerGesture.dragging = true;
+      playbackBar.classList.add("is-drawer-dragging");
+
+      try {
+        playbackBar.setPointerCapture(event.pointerId);
+      } catch (error) {
+        console.debug("[Easy Radio] Pointer capture unavailable.", error);
+      }
+    }
+
+    if (drawerGesture.direction !== "horizontal") {
+      return;
+    }
+
+    event.preventDefault();
+    if (drawerGesture.canMove) {
+      const travelDistance = getDrawerTravelDistance();
+      drawerGesture.currentOffset = clampDrawerOffset(
+        drawerGesture.startOffset + deltaX,
+        travelDistance
+      );
+      playbackBar.style.setProperty(
+        "--mobile-drawer-offset",
+        `${drawerGesture.currentOffset}px`
+      );
+    }
+  }
+
+  function finishDrawerGesture(nextPosition, suppressClick) {
+    const activeGesture = drawerGesture;
+    drawerGesture = null;
+
+    if (suppressClick) {
+      suppressNextDrawerClick = true;
+    }
+
+    setDrawerPosition(nextPosition, { deferAvailability: true });
+
+    if (
+      activeGesture &&
+      playbackBar.hasPointerCapture(activeGesture.pointerId)
+    ) {
+      playbackBar.releasePointerCapture(activeGesture.pointerId);
+    }
+  }
+
+  function handleDrawerPointerUp(event) {
+    if (!drawerGesture || event.pointerId !== drawerGesture.pointerId) {
+      return;
+    }
+
+    if (!drawerGesture.dragging) {
+      drawerGesture = null;
+      return;
+    }
+
+    event.preventDefault();
+    const travelDistance = getDrawerTravelDistance();
+    const elapsed = Math.max(
+      1,
+      window.performance.now() - drawerGesture.startTime
+    );
+    const deltaX = event.clientX - drawerGesture.startX;
+    const velocity = deltaX / elapsed;
+    const progress = Math.abs(drawerGesture.currentOffset) / travelDistance;
+    const isFastSwipe =
+      Math.abs(deltaX) >= DRAWER_FAST_SWIPE_MIN_DISTANCE &&
+      Math.abs(velocity) >= DRAWER_FAST_SWIPE_VELOCITY;
+    let nextPosition = DrawerPosition.PRIMARY;
+
+    if (!drawerGesture.canMove) {
+      nextPosition = DrawerPosition.SETTINGS_REVEALED;
+    } else if (isFastSwipe) {
+      nextPosition = deltaX < 0
+        ? DrawerPosition.SETTINGS_REVEALED
+        : DrawerPosition.PRIMARY;
+    } else if (progress >= DRAWER_SNAP_RATIO) {
+      nextPosition = DrawerPosition.SETTINGS_REVEALED;
+    }
+
+    finishDrawerGesture(nextPosition, true);
+  }
+
+  function cancelDrawerGesture(event) {
+    if (
+      !drawerGesture ||
+      (event?.pointerId !== undefined &&
+        event.pointerId !== drawerGesture.pointerId)
+    ) {
+      return;
+    }
+
+    const travelDistance = getDrawerTravelDistance();
+    const progress = Math.abs(drawerGesture.currentOffset) / travelDistance;
+    let nextPosition = drawerPosition;
+
+    if (!drawerGesture.canMove) {
+      nextPosition = DrawerPosition.SETTINGS_REVEALED;
+    } else if (drawerGesture.dragging) {
+      nextPosition = progress >= 0.5
+        ? DrawerPosition.SETTINGS_REVEALED
+        : DrawerPosition.PRIMARY;
+    }
+
+    finishDrawerGesture(nextPosition, true);
+  }
+
+  function handleDrawerClickCapture(event) {
+    if (!suppressNextDrawerClick) {
+      return;
+    }
+
+    suppressNextDrawerClick = false;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+  }
+
+  function resetDrawerForViewport() {
+    suppressNextDrawerClick = false;
+
+    if (drawerGesture) {
+      finishDrawerGesture(drawerPosition, false);
+    }
+
+    setDrawerPosition(
+      isMobileDrawer() && displayMode === DisplayMode.SETTINGS
+        ? DrawerPosition.SETTINGS_REVEALED
+        : DrawerPosition.PRIMARY
+    );
+  }
+
+  function handleDrawerTransitionEnd(event) {
+    if (
+      event.target === controlTrack &&
+      event.propertyName === "transform" &&
+      drawerAvailabilityTimer
+    ) {
+      finishDrawerAvailabilityUpdate();
+    }
+  }
+
+  function handleVisibilityChange() {
+    if (document.visibilityState === "hidden") {
+      resetDrawerForViewport();
+    }
+  }
+
   toggleButton.addEventListener("click", toggleDisplayMode);
   settingsButton.addEventListener("click", handleSettingsButtonClick);
+  playbackBar.addEventListener("click", handleDrawerClickCapture, true);
+  playbackBar.addEventListener("pointerdown", handleDrawerPointerDown);
+  playbackBar.addEventListener("pointermove", handleDrawerPointerMove, {
+    passive: false
+  });
+  playbackBar.addEventListener("pointerup", handleDrawerPointerUp);
+  playbackBar.addEventListener("pointercancel", cancelDrawerGesture);
+  playbackBar.addEventListener("lostpointercapture", cancelDrawerGesture);
+  controlTrack.addEventListener("transitionend", handleDrawerTransitionEnd);
   stationList.addEventListener("click", handleStationListClick);
   searchInput.addEventListener("input", renderStations);
   clearButton.addEventListener("click", () => {
@@ -338,6 +693,15 @@
   document.addEventListener("keydown", handleDocumentKeydown);
   document.addEventListener("pointerdown", handleDocumentPointerdown);
   document.addEventListener("easy-radio:station-change", renderStations);
+  document.addEventListener("visibilitychange", handleVisibilityChange);
+  window.addEventListener("resize", resetDrawerForViewport);
+  window.addEventListener("orientationchange", resetDrawerForViewport);
+
+  if (typeof mobileDrawerMedia.addEventListener === "function") {
+    mobileDrawerMedia.addEventListener("change", resetDrawerForViewport);
+  } else {
+    mobileDrawerMedia.addListener(resetDrawerForViewport);
+  }
 
   setDisplayMode(DisplayMode.LIST);
 })();
