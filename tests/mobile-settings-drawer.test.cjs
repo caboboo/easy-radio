@@ -82,20 +82,61 @@ test("drawer state stays separate from list, single, and settings display modes"
   );
 });
 
-test("pointer gestures use direction lock, clamping, velocity, and two snap targets", () => {
-  assert.match(viewScript, /const DRAWER_DIRECTION_THRESHOLD = 10;/);
-  assert.match(viewScript, /const DRAWER_DIRECTION_RATIO = 1\.15;/);
-  assert.match(viewScript, /const DRAWER_SNAP_RATIO = 0\.42;/);
-  assert.match(viewScript, /const DRAWER_FAST_SWIPE_MIN_DISTANCE = 16;/);
-  assert.match(viewScript, /const DRAWER_FAST_SWIPE_VELOCITY = 0\.45;/);
+test("gesture intent and drag activation use separate, phone-friendly thresholds", () => {
+  assert.match(viewScript, /const GESTURE_INTENT_THRESHOLD = 5;/);
+  assert.match(viewScript, /const DRAG_ACTIVATION_THRESHOLD = 8;/);
+  assert.match(viewScript, /const HORIZONTAL_INTENT_RATIO = 1\.2;/);
+  assert.match(
+    viewScript,
+    /Math\.max\(absoluteX, absoluteY\) < GESTURE_INTENT_THRESHOLD/
+  );
+  assert.match(
+    viewScript,
+    /absoluteY >= DRAG_ACTIVATION_THRESHOLD[\s\S]*?absoluteY > absoluteX \* HORIZONTAL_INTENT_RATIO/
+  );
+  assert.match(
+    viewScript,
+    /absoluteX < DRAG_ACTIVATION_THRESHOLD[\s\S]*?absoluteX <= absoluteY \* HORIZONTAL_INTENT_RATIO/
+  );
+  assert.match(viewScript, /drawerGesture\.direction = "vertical"/);
   assert.match(viewScript, /playbackBar\.setPointerCapture\(event\.pointerId\)/);
+});
+
+test("distance and recent velocity snapping work symmetrically from either endpoint", () => {
+  assert.match(viewScript, /const SNAP_PROGRESS_THRESHOLD = 0\.28;/);
+  assert.match(viewScript, /const MIN_FLING_DISTANCE = 16;/);
+  assert.match(viewScript, /const FLING_VELOCITY_THRESHOLD = 0\.35;/);
+  assert.match(viewScript, /const VELOCITY_SAMPLE_WINDOW = 100;/);
+  assert.match(viewScript, /samples: \[\{ x: event\.clientX, time: startTime \}\]/);
+  assert.match(viewScript, /sampleTime - VELOCITY_SAMPLE_WINDOW/);
+  assert.match(viewScript, /samples\[0\]\.time < cutoff/);
+  assert.match(
+    viewScript,
+    /return \(lastSample\.x - firstSample\.x\) \/ elapsed;/
+  );
+  assert.match(
+    viewScript,
+    /gesture\.currentOffset - gesture\.startOffset/
+  );
+  assert.match(
+    viewScript,
+    /startPosition === DrawerPosition\.PRIMARY && movementX < 0[\s\S]*?DrawerPosition\.SETTINGS_REVEALED/
+  );
+  assert.match(
+    viewScript,
+    /startPosition === DrawerPosition\.SETTINGS_REVEALED &&[\s\S]*?movementX > 0[\s\S]*?DrawerPosition\.PRIMARY/
+  );
+  assert.match(viewScript, /progress >= SNAP_PROGRESS_THRESHOLD/);
+  assert.match(viewScript, /flingTarget !== gesture\.startPosition/);
+});
+
+test("pointer gestures clamp, cancel, and reset to legal drawer positions", () => {
   assert.match(viewScript, /event\.preventDefault\(\);[\s\S]*?clampDrawerOffset/);
   assert.match(viewScript, /Math\.min\(0, Math\.max\(-travelDistance, value\)\)/);
-  assert.match(viewScript, /window\.performance\.now\(\) - drawerGesture\.startTime/);
-  assert.match(viewScript, /progress >= DRAWER_SNAP_RATIO/);
   assert.match(viewScript, /progress >= 0\.5/);
   assert.match(viewScript, /pointercancel", cancelDrawerGesture/);
   assert.match(viewScript, /lostpointercapture", cancelDrawerGesture/);
+  assert.match(viewScript, /const suppressClick = drawerGesture\.dragging;/);
   assert.match(viewScript, /window\.addEventListener\("orientationchange", resetDrawerForViewport\)/);
   assert.match(
     viewScript,
@@ -109,7 +150,7 @@ test("a drag suppresses only its click and settings remains locked in place", ()
   assert.match(viewScript, /if \(suppressClick\) \{[\s\S]*?suppressNextDrawerClick = true;/);
   assert.match(
     viewScript,
-    /function handleDrawerClickCapture[\s\S]*?suppressNextDrawerClick = false;[\s\S]*?preventDefault\(\);[\s\S]*?stopImmediatePropagation\(\);/
+    /function handleDrawerClickCapture[\s\S]*?event\.detail === 0[\s\S]*?suppressNextDrawerClick = false;[\s\S]*?preventDefault\(\);[\s\S]*?stopImmediatePropagation\(\);/
   );
   assert.match(
     viewScript,

@@ -12,11 +12,13 @@
   });
   const KEYBOARD_FOCUS_CLASS = "uses-keyboard-navigation";
   const MOBILE_DRAWER_QUERY = "(max-width: 760px)";
-  const DRAWER_DIRECTION_THRESHOLD = 10;
-  const DRAWER_DIRECTION_RATIO = 1.15;
-  const DRAWER_SNAP_RATIO = 0.42;
-  const DRAWER_FAST_SWIPE_MIN_DISTANCE = 16;
-  const DRAWER_FAST_SWIPE_VELOCITY = 0.45;
+  const GESTURE_INTENT_THRESHOLD = 5;
+  const DRAG_ACTIVATION_THRESHOLD = 8;
+  const HORIZONTAL_INTENT_RATIO = 1.2;
+  const SNAP_PROGRESS_THRESHOLD = 0.28;
+  const MIN_FLING_DISTANCE = 16;
+  const FLING_VELOCITY_THRESHOLD = 0.35;
+  const VELOCITY_SAMPLE_WINDOW = 100;
 
   const toggleButton = document.getElementById("viewToggleButton");
   const singleViewIcon = document.getElementById("viewSingleIcon");
@@ -474,6 +476,70 @@
     return Math.min(0, Math.max(-travelDistance, value));
   }
 
+  function recordDrawerPointerSample(event) {
+    const sampleTime = window.performance.now();
+    const samples = drawerGesture.samples;
+    samples.push({ x: event.clientX, time: sampleTime });
+
+    const cutoff = sampleTime - VELOCITY_SAMPLE_WINDOW;
+    while (samples.length > 2 && samples[0].time < cutoff) {
+      samples.shift();
+    }
+  }
+
+  function getRecentDrawerVelocity(gesture) {
+    const firstSample = gesture.samples[0];
+    const lastSample = gesture.samples[gesture.samples.length - 1];
+    const elapsed = Math.max(1, lastSample.time - firstSample.time);
+
+    return (lastSample.x - firstSample.x) / elapsed;
+  }
+
+  function getDirectionalDrawerPosition(startPosition, movementX) {
+    if (startPosition === DrawerPosition.PRIMARY && movementX < 0) {
+      return DrawerPosition.SETTINGS_REVEALED;
+    }
+
+    if (
+      startPosition === DrawerPosition.SETTINGS_REVEALED &&
+      movementX > 0
+    ) {
+      return DrawerPosition.PRIMARY;
+    }
+
+    return startPosition;
+  }
+
+  function getDrawerSnapPosition(gesture, travelDistance, deltaX, velocity) {
+    if (!gesture.canMove) {
+      return DrawerPosition.SETTINGS_REVEALED;
+    }
+
+    const drawerMovement = gesture.currentOffset - gesture.startOffset;
+    const progress = Math.abs(drawerMovement) / travelDistance;
+    const flingTarget = getDirectionalDrawerPosition(
+      gesture.startPosition,
+      velocity
+    );
+    const isFastSwipe =
+      Math.abs(deltaX) >= MIN_FLING_DISTANCE &&
+      Math.abs(velocity) >= FLING_VELOCITY_THRESHOLD &&
+      flingTarget !== gesture.startPosition;
+
+    if (isFastSwipe) {
+      return flingTarget;
+    }
+
+    if (progress >= SNAP_PROGRESS_THRESHOLD) {
+      return getDirectionalDrawerPosition(
+        gesture.startPosition,
+        drawerMovement
+      );
+    }
+
+    return gesture.startPosition;
+  }
+
   function handleDrawerPointerDown(event) {
     if (
       !isMobileDrawer() ||
@@ -484,17 +550,20 @@
       return;
     }
 
+    const startTime = window.performance.now();
+    const startOffset = getDrawerOffset();
     suppressNextDrawerClick = false;
     drawerGesture = {
       pointerId: event.pointerId,
       startX: event.clientX,
       startY: event.clientY,
-      startTime: window.performance.now(),
-      startOffset: getDrawerOffset(),
-      currentOffset: getDrawerOffset(),
+      startOffset,
+      currentOffset: startOffset,
+      startPosition: drawerPosition,
       direction: "pending",
       dragging: false,
-      canMove: displayMode !== DisplayMode.SETTINGS
+      canMove: displayMode !== DisplayMode.SETTINGS,
+      samples: [{ x: event.clientX, time: startTime }]
     };
   }
 
@@ -503,6 +572,7 @@
       return;
     }
 
+    recordDrawerPointerSample(event);
     const deltaX = event.clientX - drawerGesture.startX;
     const deltaY = event.clientY - drawerGesture.startY;
     const absoluteX = Math.abs(deltaX);
@@ -510,17 +580,23 @@
 
     if (drawerGesture.direction === "pending") {
       if (
-        Math.max(absoluteX, absoluteY) < DRAWER_DIRECTION_THRESHOLD
+        Math.max(absoluteX, absoluteY) < GESTURE_INTENT_THRESHOLD
       ) {
         return;
       }
 
-      if (absoluteY >= absoluteX * DRAWER_DIRECTION_RATIO) {
-        drawerGesture = null;
+      if (
+        absoluteY >= DRAG_ACTIVATION_THRESHOLD &&
+        absoluteY > absoluteX * HORIZONTAL_INTENT_RATIO
+      ) {
+        drawerGesture.direction = "vertical";
         return;
       }
 
-      if (absoluteX < absoluteY * DRAWER_DIRECTION_RATIO) {
+      if (
+        absoluteX < DRAG_ACTIVATION_THRESHOLD ||
+        absoluteX <= absoluteY * HORIZONTAL_INTENT_RATIO
+      ) {
         return;
       }
 
@@ -582,28 +658,16 @@
     }
 
     event.preventDefault();
+    recordDrawerPointerSample(event);
     const travelDistance = getDrawerTravelDistance();
-    const elapsed = Math.max(
-      1,
-      window.performance.now() - drawerGesture.startTime
-    );
     const deltaX = event.clientX - drawerGesture.startX;
-    const velocity = deltaX / elapsed;
-    const progress = Math.abs(drawerGesture.currentOffset) / travelDistance;
-    const isFastSwipe =
-      Math.abs(deltaX) >= DRAWER_FAST_SWIPE_MIN_DISTANCE &&
-      Math.abs(velocity) >= DRAWER_FAST_SWIPE_VELOCITY;
-    let nextPosition = DrawerPosition.PRIMARY;
-
-    if (!drawerGesture.canMove) {
-      nextPosition = DrawerPosition.SETTINGS_REVEALED;
-    } else if (isFastSwipe) {
-      nextPosition = deltaX < 0
-        ? DrawerPosition.SETTINGS_REVEALED
-        : DrawerPosition.PRIMARY;
-    } else if (progress >= DRAWER_SNAP_RATIO) {
-      nextPosition = DrawerPosition.SETTINGS_REVEALED;
-    }
+    const velocity = getRecentDrawerVelocity(drawerGesture);
+    const nextPosition = getDrawerSnapPosition(
+      drawerGesture,
+      travelDistance,
+      deltaX,
+      velocity
+    );
 
     finishDrawerGesture(nextPosition, true);
   }
@@ -619,6 +683,7 @@
 
     const travelDistance = getDrawerTravelDistance();
     const progress = Math.abs(drawerGesture.currentOffset) / travelDistance;
+    const suppressClick = drawerGesture.dragging;
     let nextPosition = drawerPosition;
 
     if (!drawerGesture.canMove) {
@@ -629,11 +694,11 @@
         : DrawerPosition.PRIMARY;
     }
 
-    finishDrawerGesture(nextPosition, true);
+    finishDrawerGesture(nextPosition, suppressClick);
   }
 
   function handleDrawerClickCapture(event) {
-    if (!suppressNextDrawerClick) {
+    if (!suppressNextDrawerClick || event.detail === 0) {
       return;
     }
 
