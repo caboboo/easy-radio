@@ -11,14 +11,19 @@ const viewScript = fs.readFileSync(
 );
 const styles = fs.readFileSync(path.join(projectRoot, "style.css"), "utf8");
 
-test("the top corners use one text navigation button and one dual-state icon button", () => {
-  const topbar =
-    html.match(/<header class="topbar">([\s\S]*?)<\/header>/)?.[1] || "";
+test("the bottom player uses one action-oriented mode button and the top keeps one settings button", () => {
+  const floatingBar =
+    html.match(
+      /<div class="playback-controls shared-playback-controls floating-playback-bar">[\s\S]*?(?=<audio id="radio")/
+    )?.[0] || "";
 
   assert.equal((html.match(/id="viewToggleButton"/g) || []).length, 1);
   assert.equal((html.match(/id="settingsButton"/g) || []).length, 1);
-  assert.match(topbar, /id="viewToggleButton"/);
-  assert.doesNotMatch(topbar, /settingsBackButton|settings-back-button/);
+  assert.match(floatingBar, /id="viewToggleButton"[\s\S]*?id="playButton"/);
+  assert.match(floatingBar, /aria-label="切換到目前電台"/);
+  assert.match(floatingBar, /id="viewSingleIcon"[\s\S]*?focusable="false"/);
+  assert.match(floatingBar, /id="viewListIcon"[\s\S]*?focusable="false"[\s\S]*?hidden/);
+  assert.doesNotMatch(html, /class="topbar"|id="viewToggleText"/);
   assert.match(html, /id="settingsGearIcon"[\s\S]*?aria-hidden="true"/);
   assert.match(
     html,
@@ -27,27 +32,50 @@ test("the top corners use one text navigation button and one dual-state icon but
   assert.doesNotMatch(html, /⚙|⚙️|❌|✕/);
 });
 
-test("floating navigation uses safe-area offsets and a shared layout spacer", () => {
+test("the mode button stays in normal player flow while top settings keeps safe-area offsets", () => {
+  const modeButtonStyles =
+    styles.match(/\.view-toggle-button\s*\{([\s\S]*?)\}/)?.[1] || "";
+
+  assert.match(modeButtonStyles, /flex: 0 0 52px;/);
+  assert.match(modeButtonStyles, /width: 52px;/);
+  assert.match(modeButtonStyles, /min-height: 52px;/);
+  assert.doesNotMatch(modeButtonStyles, /position: fixed|\btop:|\bleft:/);
   assert.match(
     styles,
-    /\.view-toggle-button\s*\{[\s\S]*?position: fixed;[\s\S]*?top: calc\(14px \+ env\(safe-area-inset-top\)\);[\s\S]*?left: calc\(14px \+ env\(safe-area-inset-left\)\);[\s\S]*?z-index: 20;[\s\S]*?min-height: 52px;/
+    /\.playback-primary-controls\s*\{[\s\S]*?display: flex;[\s\S]*?gap: 10px;/
   );
   assert.match(
     styles,
     /\.settings-button\s*\{[\s\S]*?position: fixed;[\s\S]*?top: calc\(14px \+ env\(safe-area-inset-top\)\);[\s\S]*?right: calc\(14px \+ env\(safe-area-inset-right\)\);[\s\S]*?z-index: 20;[\s\S]*?width: 52px;[\s\S]*?min-height: 52px;/
   );
-  assert.match(styles, /\.topbar\s*\{[\s\S]*?min-height: 52px;[\s\S]*?background: transparent;[\s\S]*?padding: 0;/);
+  assert.match(styles, /\.main-content\s*\{[\s\S]*?margin: 56px auto 0;/);
   assert.match(
     styles,
-    /@media \(max-width: 480px\) and \(orientation: portrait\)[\s\S]*?\.view-toggle-button\s*\{[\s\S]*?top: calc\(8px \+ env\(safe-area-inset-top\)\);[\s\S]*?left: calc\(8px \+ env\(safe-area-inset-left\)\);[\s\S]*?min-height: 48px;/
+    /@media \(max-width: 480px\) and \(orientation: portrait\)[\s\S]*?\.view-toggle-button\s*\{[\s\S]*?flex-basis: 48px;[\s\S]*?width: 48px;[\s\S]*?min-height: 48px;/
   );
   assert.match(
     styles,
-    /@media \(max-width: 900px\) and \(max-height: 500px\) and \(orientation: landscape\)[\s\S]*?\.view-toggle-button\s*\{[\s\S]*?min-height: 44px;[\s\S]*?\.settings-button\s*\{[\s\S]*?min-height: 44px;/
+    /@media \(max-height: 500px\) and \(orientation: landscape\)[\s\S]*?\.view-toggle-button\s*\{[\s\S]*?flex-basis: 44px;[\s\S]*?width: 44px;[\s\S]*?min-height: 44px;/
   );
-  assert.doesNotMatch(styles, /\.settings-back-button/);
+  assert.doesNotMatch(styles, /\.topbar|\.settings-back-button/);
 });
 
+test("mode icon, label, focus, and settings visibility update from display mode", () => {
+  assert.match(
+    viewScript,
+    /showList \? "切換到目前電台" : "切換到所有電台"/
+  );
+  assert.match(viewScript, /toggleButton\.title = showList \? "目前電台" : "所有電台"/);
+  assert.match(viewScript, /singleViewIcon\.toggleAttribute\("hidden", !showList\)/);
+  assert.match(viewScript, /listViewIcon\.toggleAttribute\("hidden", showList\)/);
+  assert.match(viewScript, /toggleButton\.hidden = showSettings/);
+  assert.match(viewScript, /else if \(focusToggle\) \{[\s\S]*?toggleButton\.focus\(\)/);
+  assert.equal(
+    (viewScript.match(/toggleButton\.addEventListener\("click"/g) || []).length,
+    1
+  );
+  assert.doesNotMatch(viewScript, /innerHTML|viewToggleText|viewToggleIcon/);
+});
 test("settings swaps the same button between gear and close behavior", () => {
   assert.match(viewScript, /let previousDisplayMode = DisplayMode\.LIST/);
   assert.match(

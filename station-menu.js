@@ -9,18 +9,16 @@
   const KEYBOARD_FOCUS_CLASS = "uses-keyboard-navigation";
 
   const toggleButton = document.getElementById("viewToggleButton");
-  const toggleIcon = document.getElementById("viewToggleIcon");
-  const toggleText = document.getElementById("viewToggleText");
+  const singleViewIcon = document.getElementById("viewSingleIcon");
+  const listViewIcon = document.getElementById("viewListIcon");
   const settingsButton = document.getElementById("settingsButton");
   const settingsGearIcon = document.getElementById("settingsGearIcon");
   const settingsCloseIcon = document.getElementById("settingsCloseIcon");
   const mainContent = document.querySelector(".main-content");
   const playerView = document.getElementById("playerView");
-  const stationName = document.getElementById("stationName");
   const listView = document.getElementById("stationListView");
   const settingsView = document.getElementById("settingsView");
   const settingsTitle = document.getElementById("settingsTitle");
-  const listTitle = document.getElementById("stationListTitle");
   const searchSection = document.getElementById("stationSearchSection");
   const searchInput = document.getElementById("stationSearch");
   const clearButton = document.getElementById("stationSearchClear");
@@ -38,18 +36,16 @@
 
   if (
     !toggleButton ||
-    !toggleIcon ||
-    !toggleText ||
+    !singleViewIcon ||
+    !listViewIcon ||
     !settingsButton ||
     !settingsGearIcon ||
     !settingsCloseIcon ||
     !mainContent ||
     !playerView ||
-    !stationName ||
     !listView ||
     !settingsView ||
     !settingsTitle ||
-    !listTitle ||
     !searchSection ||
     !searchInput ||
     !clearButton ||
@@ -221,13 +217,13 @@
     settingsGearIcon.toggleAttribute("hidden", showSettings);
     settingsCloseIcon.toggleAttribute("hidden", !showSettings);
     mainContent.classList.toggle("is-settings-view", showSettings);
-    toggleButton.setAttribute("aria-pressed", String(showList));
     toggleButton.setAttribute(
       "aria-label",
-      showList ? "顯示目前電台" : "顯示所有電台"
+      showList ? "切換到目前電台" : "切換到所有電台"
     );
-    toggleIcon.textContent = showList ? "▶" : "▦";
-    toggleText.textContent = showList ? "目前電台" : "所有電台";
+    toggleButton.title = showList ? "目前電台" : "所有電台";
+    singleViewIcon.toggleAttribute("hidden", !showList);
+    listViewIcon.toggleAttribute("hidden", showList);
 
     if (showList) {
       renderStations();
@@ -238,7 +234,7 @@
     } else if (focusSettingsButton) {
       settingsButton.focus();
     } else if (focusToggle) {
-      (showList ? toggleButton : stationName).focus();
+      toggleButton.focus();
     }
   }
 

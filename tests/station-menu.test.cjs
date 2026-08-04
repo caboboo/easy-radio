@@ -17,10 +17,12 @@ test("the page defaults to the station-list home without a single-view flash", (
     "";
 
   assert.match(html, /id="viewToggleButton"/);
-  assert.match(html, /aria-label="顯示目前電台"/);
-  assert.match(html, /aria-pressed="true"/);
+  assert.match(html, /aria-label="切換到目前電台"/);
   assert.match(html, /aria-controls="playerView stationListView"/);
-  assert.match(html, /id="viewToggleText">目前電台<\/span>/);
+  assert.match(html, /title="目前電台"/);
+  assert.match(html, /id="viewSingleIcon"[\s\S]*?aria-hidden="true"/);
+  assert.match(html, /id="viewListIcon"[\s\S]*?aria-hidden="true"[\s\S]*?hidden/);
+  assert.doesNotMatch(html, /id="viewToggleText"|class="topbar"/);
   assert.match(
     html,
     /<section id="playerView" class="player-card" aria-labelledby="stationName" hidden>/
@@ -34,9 +36,7 @@ test("the page defaults to the station-list home without a single-view flash", (
   assert.match(html, /id="stationListTitle">選擇電台<\/h1>/);
 });
 
-test("one control set floats at page bottom outside all three views", () => {
-  const topbar =
-    html.match(/<header class="topbar">([\s\S]*?)<\/header>/)?.[1] || "";
+test("one control set and one mode button float at page bottom", () => {
   const floatingBar =
     html.match(
       /<div class="playback-controls shared-playback-controls floating-playback-bar">[\s\S]*?(?=<audio id="radio")/
@@ -51,19 +51,15 @@ test("one control set floats at page bottom outside all three views", () => {
     html.match(/<section[\s\S]*?id="settingsView"[\s\S]*?<\/section>/)?.[0] ||
     "";
 
-  assert.doesNotMatch(topbar, /playButton|volumeSlider|muteButton|class="clock"/);
-  assert.match(topbar, /id="viewToggleButton"/);
-  assert.doesNotMatch(topbar, /settingsBackButton|settings-back-button/);
-  assert.match(
-    styles,
-    /\.view-toggle-button\s*\{[\s\S]*?position: fixed;[\s\S]*?top: calc\(14px \+ env\(safe-area-inset-top\)\);[\s\S]*?left: calc\(14px \+ env\(safe-area-inset-left\)\);/
-  );
-  assert.match(floatingBar, /id="playButton"/);
+  assert.doesNotMatch(html, /class="topbar"/);
+  assert.match(floatingBar, /class="playback-primary-controls"/);
+  assert.match(floatingBar, /id="viewToggleButton"[\s\S]*?id="playButton"/);
   assert.match(floatingBar, /id="volumeSlider"/);
   assert.match(floatingBar, /id="muteButton"/);
-  assert.doesNotMatch(playerView, /playButton|volumeSlider|muteButton/);
-  assert.doesNotMatch(listView, /playButton|volumeSlider|muteButton/);
-  assert.doesNotMatch(settingsView, /playButton|volumeSlider|muteButton/);
+  assert.doesNotMatch(playerView, /viewToggleButton|playButton|volumeSlider|muteButton/);
+  assert.doesNotMatch(listView, /viewToggleButton|playButton|volumeSlider|muteButton/);
+  assert.doesNotMatch(settingsView, /viewToggleButton|playButton|volumeSlider|muteButton/);
+  assert.equal((html.match(/id="viewToggleButton"/g) || []).length, 1);
   assert.equal((html.match(/id="playButton"/g) || []).length, 1);
   assert.equal((html.match(/id="volumeSlider"/g) || []).length, 1);
   assert.equal((html.match(/id="muteButton"/g) || []).length, 1);
@@ -156,12 +152,14 @@ test("view state switches three content views without controlling audio", () => 
     viewScript,
     /stationList\.querySelector\("\.station-option"\)[\s\S]*?\.focus\(\)/
   );
-  assert.doesNotMatch(viewScript, /listTitle\.focus\(\)/);
-  assert.match(viewScript, /const stationName = document\.getElementById\("stationName"\)/);
-  assert.match(viewScript, /\(showList \? toggleButton : stationName\)\.focus\(\)/);
+  assert.doesNotMatch(viewScript, /listTitle\.focus\(\)|stationName\.focus\(\)/);
+  assert.match(viewScript, /toggleButton\.focus\(\)/);
   assert.match(viewScript, /\{ focusToggle: true \}/);
   assert.match(viewScript, /showList \? "目前電台" : "所有電台"/);
-  assert.match(viewScript, /showList \? "顯示目前電台" : "顯示所有電台"/);
+  assert.match(viewScript, /showList \? "切換到目前電台" : "切換到所有電台"/);
+  assert.match(viewScript, /singleViewIcon\.toggleAttribute\("hidden", !showList\)/);
+  assert.match(viewScript, /listViewIcon\.toggleAttribute\("hidden", showList\)/);
+  assert.match(viewScript, /toggleButton\.hidden = showSettings/);
   assert.match(viewScript, /event\.key !== "Escape"/);
   assert.doesNotMatch(
     viewScript,
