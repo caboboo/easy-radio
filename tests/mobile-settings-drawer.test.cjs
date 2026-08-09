@@ -135,8 +135,22 @@ test("pointer gestures clamp, cancel, and reset to legal drawer positions", () =
   assert.match(viewScript, /Math\.min\(0, Math\.max\(-travelDistance, value\)\)/);
   assert.match(viewScript, /progress >= 0\.5/);
   assert.match(viewScript, /pointercancel", cancelDrawerGesture/);
-  assert.match(viewScript, /lostpointercapture", cancelDrawerGesture/);
-  assert.match(viewScript, /const suppressClick = drawerGesture\.dragging;/);
+  assert.match(viewScript, /function handleDrawerLostPointerCapture/);
+  assert.match(viewScript, /event\.target !== playbackBar/);
+  assert.match(viewScript, /!drawerGesture/);
+  assert.match(
+    viewScript,
+    /event\.pointerId !== drawerGesture\.pointerId/
+  );
+  assert.match(viewScript, /cancelDrawerGesture\(event\);/);
+  assert.match(
+    viewScript,
+    /playbackBar\.addEventListener\(\s*"lostpointercapture",\s*handleDrawerLostPointerCapture\s*\);/
+  );
+  assert.doesNotMatch(
+    viewScript,
+    /addEventListener\("lostpointercapture", cancelDrawerGesture\)/
+  );  assert.match(viewScript, /const suppressClick = drawerGesture\.dragging;/);
   assert.match(viewScript, /window\.addEventListener\("orientationchange", resetDrawerForViewport\)/);
   assert.match(
     viewScript,
@@ -258,7 +272,7 @@ test("drawer listeners are registered once and never touch audio state", () => {
     "lostpointercapture"
   ]) {
     assert.equal(
-      (viewScript.match(new RegExp(`playbackBar\\.addEventListener\\("${eventName}"`, "g")) || []).length,
+      (viewScript.match(new RegExp(`playbackBar\\.addEventListener\\(\\s*"${eventName}"`, "g")) || []).length,
       1
     );
   }
@@ -272,4 +286,339 @@ test("drawer listeners are registered once and never touch audio state", () => {
     drawerFunctions,
     /selectStation|userWantsPlayback|playbackState|activePlayRequest|retryTimer|bufferingTimer|\.src|\.load\(|\.play\(|\.pause\(/
   );
+});
+function extractDrawerFunction(name) {
+  const match = viewScript.match(
+    new RegExp(
+      `  function ${name}\\([^\\n]*\\) \\{[\\s\\S]*?(?=\\n  function |\\n  toggleButton\\.addEventListener)`
+    )
+  );
+
+  assert.ok(match, `Expected to extract ${name} from station-menu.js.`);
+  return match[0];
+}
+
+function createDrawerGestureHarness(initialPosition = "primary") {
+  const capturedPointers = new Set();
+  const activeClasses = new Set();
+  const customStyles = new Map();
+  const playbackBar = {
+    classList: {
+      add(name) {
+        activeClasses.add(name);
+      },
+      remove(name) {
+        activeClasses.delete(name);
+      },
+      contains(name) {
+        return activeClasses.has(name);
+      }
+    },
+    style: {
+      setProperty(name, value) {
+        customStyles.set(name, value);
+      },
+      removeProperty(name) {
+        customStyles.delete(name);
+      }
+    },
+    setPointerCapture(pointerId) {
+      capturedPointers.add(pointerId);
+    },
+    hasPointerCapture(pointerId) {
+      return capturedPointers.has(pointerId);
+    },
+    releasePointerCapture(pointerId) {
+      capturedPointers.delete(pointerId);
+    }
+  };
+  const functionNames = [
+    "clampDrawerOffset",
+    "recordDrawerPointerSample",
+    "getRecentDrawerVelocity",
+    "getDirectionalDrawerPosition",
+    "getDrawerSnapPosition",
+    "handleDrawerPointerDown",
+    "handleDrawerPointerMove",
+    "finishDrawerGesture",
+    "handleDrawerPointerUp",
+    "cancelDrawerGesture",
+    "handleDrawerLostPointerCapture",
+    "handleDrawerClickCapture"
+  ];
+  const functions = functionNames.map(extractDrawerFunction).join("\n");
+  const makeHarness = new Function(
+    "playbackBar",
+    "initialPosition",
+    `
+      "use strict";
+      const DisplayMode = Object.freeze({
+        LIST: "list",
+        SETTINGS: "settings"
+      });
+      const DrawerPosition = Object.freeze({
+        PRIMARY: "primary",
+        SETTINGS_REVEALED: "settings-revealed"
+      });
+      const GESTURE_INTENT_THRESHOLD = 5;
+      const DRAG_ACTIVATION_THRESHOLD = 8;
+      const HORIZONTAL_INTENT_RATIO = 1.2;
+      const SNAP_PROGRESS_THRESHOLD = 0.28;
+      const MIN_FLING_DISTANCE = 16;
+      const FLING_VELOCITY_THRESHOLD = 0.35;
+      const VELOCITY_SAMPLE_WINDOW = 100;
+      let clock = 0;
+      const window = {
+        performance: {
+          now() {
+            clock += 100;
+            return clock;
+          }
+        }
+      };
+      let displayMode = DisplayMode.LIST;
+      let drawerPosition = initialPosition;
+      let drawerGesture = null;
+      let suppressNextDrawerClick = false;
+
+      function isMobileDrawer() {
+        return true;
+      }
+
+      function getDrawerTravelDistance() {
+        return 54;
+      }
+
+      function getDrawerOffset() {
+        return drawerPosition === DrawerPosition.SETTINGS_REVEALED ? -54 : 0;
+      }
+
+      function setDrawerPosition(nextPosition) {
+        drawerPosition = nextPosition;
+        playbackBar.classList.remove("is-drawer-dragging");
+        playbackBar.style.removeProperty("--mobile-drawer-offset");
+      }
+
+      ${functions}
+
+      return {
+        pointerDown: handleDrawerPointerDown,
+        pointerMove: handleDrawerPointerMove,
+        pointerUp: handleDrawerPointerUp,
+        pointerCancel: cancelDrawerGesture,
+        lostPointerCapture: handleDrawerLostPointerCapture,
+        clickCapture: handleDrawerClickCapture,
+        state() {
+          return {
+            drawerPosition,
+            gesture: drawerGesture
+              ? {
+                  pointerId: drawerGesture.pointerId,
+                  dragging: drawerGesture.dragging,
+                  direction: drawerGesture.direction,
+                  currentOffset: drawerGesture.currentOffset
+                }
+              : null,
+            suppressNextDrawerClick,
+            draggingClass: playbackBar.classList.contains(
+              "is-drawer-dragging"
+            )
+          };
+        }
+      };
+    `
+  );
+
+  return {
+    playbackBar,
+    ...makeHarness(playbackBar, initialPosition)
+  };
+}
+
+function createControlTarget(id) {
+  return {
+    id,
+    closest(selector) {
+      return selector === "button" ? this : null;
+    }
+  };
+}
+
+function createPointerEvent({
+  pointerId = 1,
+  target,
+  clientX,
+  clientY = 0
+}) {
+  return {
+    pointerId,
+    target,
+    clientX,
+    clientY,
+    pointerType: "touch",
+    button: 0,
+    isPrimary: true,
+    defaultPrevented: false,
+    preventDefault() {
+      this.defaultPrevented = true;
+    }
+  };
+}
+
+function beginHorizontalDrag(harness, target, startX, nextX) {
+  harness.pointerDown(
+    createPointerEvent({ target, clientX: startX })
+  );
+  harness.pointerMove(
+    createPointerEvent({ target, clientX: nextX })
+  );
+}
+
+test("descendant pointer capture transfers keep left drags alive", () => {
+  for (const id of ["playButton", "viewToggleButton"]) {
+    const harness = createDrawerGestureHarness();
+    const button = createControlTarget(id);
+
+    beginHorizontalDrag(harness, button, 100, 90);
+    harness.lostPointerCapture(
+      createPointerEvent({ target: button, clientX: 90 })
+    );
+
+    assert.deepEqual(
+      {
+        dragging: harness.state().gesture?.dragging,
+        direction: harness.state().gesture?.direction,
+        drawerPosition: harness.state().drawerPosition
+      },
+      {
+        dragging: true,
+        direction: "horizontal",
+        drawerPosition: "primary"
+      }
+    );
+
+    harness.pointerMove(
+      createPointerEvent({ target: button, clientX: 82 })
+    );
+    harness.pointerUp(
+      createPointerEvent({ target: button, clientX: 82 })
+    );
+
+    assert.equal(harness.state().drawerPosition, "settings-revealed");
+    assert.equal(harness.state().gesture, null);
+  }
+});
+
+test("18px of 54px snaps after a play button capture transfer", () => {
+  const harness = createDrawerGestureHarness();
+  const playButton = createControlTarget("playButton");
+
+  beginHorizontalDrag(harness, playButton, 100, 90);
+  harness.lostPointerCapture(
+    createPointerEvent({ target: playButton, clientX: 90 })
+  );
+  harness.pointerMove(
+    createPointerEvent({ target: playButton, clientX: 82 })
+  );
+
+  assert.equal(harness.state().gesture?.currentOffset, -18);
+  harness.pointerUp(
+    createPointerEvent({ target: playButton, clientX: 82 })
+  );
+  assert.equal(harness.state().drawerPosition, "settings-revealed");
+});
+
+test("descendant capture transfers keep right drags alive", () => {
+  for (const id of ["playButton", "settingsButton"]) {
+    const harness = createDrawerGestureHarness("settings-revealed");
+    const button = createControlTarget(id);
+
+    beginHorizontalDrag(harness, button, 100, 110);
+    harness.lostPointerCapture(
+      createPointerEvent({ target: button, clientX: 110 })
+    );
+    assert.equal(harness.state().gesture?.dragging, true);
+
+    harness.pointerMove(
+      createPointerEvent({ target: button, clientX: 118 })
+    );
+    harness.pointerUp(
+      createPointerEvent({ target: button, clientX: 118 })
+    );
+
+    assert.equal(harness.state().drawerPosition, "primary");
+    assert.equal(harness.state().gesture, null);
+  }
+});
+
+test("only the active playback bar capture loss cancels a drag", () => {
+  const playButton = createControlTarget("playButton");
+  const wrongPointerHarness = createDrawerGestureHarness();
+
+  beginHorizontalDrag(wrongPointerHarness, playButton, 100, 90);
+  wrongPointerHarness.lostPointerCapture(
+    createPointerEvent({
+      pointerId: 2,
+      target: wrongPointerHarness.playbackBar,
+      clientX: 90
+    })
+  );
+  assert.equal(wrongPointerHarness.state().gesture?.pointerId, 1);
+  assert.equal(wrongPointerHarness.state().gesture?.dragging, true);
+
+  const activePointerHarness = createDrawerGestureHarness();
+  beginHorizontalDrag(activePointerHarness, playButton, 100, 90);
+  activePointerHarness.lostPointerCapture(
+    createPointerEvent({
+      target: activePointerHarness.playbackBar,
+      clientX: 90
+    })
+  );
+
+  assert.equal(activePointerHarness.state().gesture, null);
+  assert.equal(activePointerHarness.state().drawerPosition, "primary");
+  assert.equal(activePointerHarness.state().draggingClass, false);
+});
+
+test("a completed button drag suppresses exactly its derived click", () => {
+  const harness = createDrawerGestureHarness();
+  const playButton = createControlTarget("playButton");
+
+  beginHorizontalDrag(harness, playButton, 100, 90);
+  harness.lostPointerCapture(
+    createPointerEvent({ target: playButton, clientX: 90 })
+  );
+  harness.pointerMove(
+    createPointerEvent({ target: playButton, clientX: 82 })
+  );
+  harness.pointerUp(
+    createPointerEvent({ target: playButton, clientX: 82 })
+  );
+
+  const firstClick = {
+    detail: 1,
+    prevented: false,
+    stopped: false,
+    preventDefault() {
+      this.prevented = true;
+    },
+    stopImmediatePropagation() {
+      this.stopped = true;
+    }
+  };
+  harness.clickCapture(firstClick);
+  assert.equal(firstClick.prevented, true);
+  assert.equal(firstClick.stopped, true);
+  assert.equal(harness.state().suppressNextDrawerClick, false);
+
+  const nextClick = {
+    detail: 1,
+    prevented: false,
+    preventDefault() {
+      this.prevented = true;
+    },
+    stopImmediatePropagation() {}
+  };
+  harness.clickCapture(nextClick);
+  assert.equal(nextClick.prevented, false);
 });

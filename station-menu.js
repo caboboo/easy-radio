@@ -699,6 +699,18 @@
     finishDrawerGesture(nextPosition, suppressClick);
   }
 
+  function handleDrawerLostPointerCapture(event) {
+    if (
+      event.target !== playbackBar ||
+      !drawerGesture ||
+      event.pointerId !== drawerGesture.pointerId
+    ) {
+      return;
+    }
+
+    cancelDrawerGesture(event);
+  }
+
   function handleDrawerClickCapture(event) {
     if (!suppressNextDrawerClick || event.detail === 0) {
       return;
@@ -755,7 +767,10 @@
   playbackBar.addEventListener("pointercancel", cancelDrawerGesture, {
     capture: true
   });
-  playbackBar.addEventListener("lostpointercapture", cancelDrawerGesture);
+  playbackBar.addEventListener(
+    "lostpointercapture",
+    handleDrawerLostPointerCapture
+  );
   controlTrack.addEventListener("transitionend", handleDrawerTransitionEnd);
   stationList.addEventListener("click", handleStationListClick);
   searchInput.addEventListener("input", renderStations);
