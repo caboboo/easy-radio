@@ -78,15 +78,25 @@
       >
         <div class="embedded-station-player-heading">
           <h2 id="embeddedStationPlayerTitle">綠色和平官方播放器</h2>
-          <button
-            id="embeddedStationPlayerToggle"
-            class="embedded-station-player-toggle"
-            type="button"
-            aria-controls="embeddedStationPlayerHost"
-            aria-expanded="true"
-          >
-            收起官方播放器
-          </button>
+          <div class="embedded-station-player-actions">
+            <button
+              id="embeddedStationPlayerToggle"
+              class="embedded-station-player-toggle"
+              type="button"
+              aria-controls="embeddedStationPlayerHost"
+              aria-expanded="true"
+            >
+              收起官方播放器
+            </button>
+            <button
+              id="embeddedStationPlayerReset"
+              class="embedded-station-player-reset"
+              type="button"
+              aria-controls="embeddedStationPlayerHost"
+            >
+              重新載入官方播放器
+            </button>
+          </div>
         </div>
         <p id="embeddedStationPlayerStatus">請按播放器中的「確定」開始收聽</p>
         <div id="embeddedStationPlayerHost"></div>

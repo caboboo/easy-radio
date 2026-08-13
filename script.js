@@ -25,6 +25,9 @@ const embeddedStationPlayerHost = document.getElementById(
 const embeddedStationPlayerToggle = document.getElementById(
   "embeddedStationPlayerToggle"
 );
+const embeddedStationPlayerReset = document.getElementById(
+  "embeddedStationPlayerReset"
+);
 const embeddedStationPlayerStatus = document.getElementById(
   "embeddedStationPlayerStatus"
 );
@@ -176,26 +179,37 @@ function isSelectableStation(station) {
 
 function updateEmbeddedStationPlayerVisibility() {
   const hasIframe = embeddedStationPlayerFrame !== null;
-  const isCollapsed = hasIframe && isEmbeddedStationPlayerCollapsed;
+  const isActive = hasIframe && isEmbeddedPlayerStation(currentStation);
+  const isParked = hasIframe && !isActive;
+  const isCollapsed = isActive && isEmbeddedStationPlayerCollapsed;
 
+  embeddedStationPlayerElement.hidden = !hasIframe;
+  embeddedStationPlayerElement.classList.toggle("is-parked", isParked);
   embeddedStationPlayerElement.classList.toggle("is-collapsed", isCollapsed);
+  embeddedStationPlayerElement.setAttribute(
+    "aria-hidden",
+    String(!isActive)
+  );
   embeddedStationPlayerToggle.textContent = isCollapsed
     ? "顯示官方播放器"
     : "收起官方播放器";
   embeddedStationPlayerToggle.setAttribute(
     "aria-expanded",
-    String(hasIframe && !isCollapsed)
+    String(isActive && !isCollapsed)
   );
   embeddedStationPlayerStatus.textContent = isCollapsed
     ? "官方播放器已收起"
     : "請按播放器中的「確定」開始收聽";
   embeddedStationPlayerHost.setAttribute(
     "aria-hidden",
-    String(!hasIframe || isCollapsed)
+    String(!isActive || isCollapsed)
   );
 
-  if (embeddedStationPlayerFrame) {
-    embeddedStationPlayerFrame.tabIndex = isCollapsed ? -1 : 0;
+  embeddedStationPlayerToggle.tabIndex = isActive ? 0 : -1;
+  embeddedStationPlayerReset.tabIndex = isActive ? 0 : -1;
+
+  if (hasIframe) {
+    embeddedStationPlayerFrame.tabIndex = isActive && !isCollapsed ? 0 : -1;
   }
 }
 
@@ -203,26 +217,39 @@ function destroyEmbeddedStationPlayer() {
   embeddedStationPlayerFrame = null;
   isEmbeddedStationPlayerCollapsed = false;
   embeddedStationPlayerHost.replaceChildren();
-  embeddedStationPlayerElement.hidden = true;
   updateEmbeddedStationPlayerVisibility();
 }
 
 function showEmbeddedStationPlayer(station) {
-  destroyEmbeddedStationPlayer();
-
   if (!isEmbeddedPlayerStation(station)) {
     return;
   }
 
-  const iframe = document.createElement("iframe");
-  iframe.src = cleanStationText(station.iframeUrl);
-  iframe.title = `${cleanStationText(station.name)}官方播放器`;
-  iframe.allow = "autoplay";
-  iframe.loading = "eager";
-  embeddedStationPlayerFrame = iframe;
-  embeddedStationPlayerHost.append(iframe);
-  embeddedStationPlayerElement.hidden = false;
+  if (embeddedStationPlayerFrame === null) {
+    const iframe = document.createElement("iframe");
+    iframe.src = cleanStationText(station.iframeUrl);
+    iframe.title = `${cleanStationText(station.name)}官方播放器`;
+    iframe.allow = "autoplay";
+    iframe.loading = "eager";
+    embeddedStationPlayerFrame = iframe;
+    embeddedStationPlayerHost.append(iframe);
+  }
+
+  isEmbeddedStationPlayerCollapsed = false;
   updateEmbeddedStationPlayerVisibility();
+}
+
+function parkEmbeddedStationPlayer() {
+  updateEmbeddedStationPlayerVisibility();
+}
+
+function resetEmbeddedStationPlayer() {
+  if (!isEmbeddedPlayerStation(currentStation)) {
+    return;
+  }
+
+  destroyEmbeddedStationPlayer();
+  showEmbeddedStationPlayer(currentStation);
 }
 
 function toggleEmbeddedStationPlayer() {
@@ -289,7 +316,7 @@ function initializeCurrentStation() {
     return;
   }
 
-  destroyEmbeddedStationPlayer();
+  parkEmbeddedStationPlayer();
   radioSource.src = currentStation.streamUrl;
 }
 
@@ -354,7 +381,7 @@ function selectStation(stationId) {
     return { changed: true, reason: "embedded-player" };
   }
 
-  destroyEmbeddedStationPlayer();
+  parkEmbeddedStationPlayer();
 
   if (shouldContinuePlayback) {
     setPlaybackState(PlaybackState.RECONNECTING);
@@ -733,6 +760,10 @@ function handleBufferingSignal(eventName) {
 embeddedStationPlayerToggle.addEventListener(
   "click",
   toggleEmbeddedStationPlayer
+);
+embeddedStationPlayerReset.addEventListener(
+  "click",
+  resetEmbeddedStationPlayer
 );
 
 playButton.addEventListener("click", () => {

@@ -11,7 +11,7 @@ Version 代表產品版本，由 Project Owner 決定。
 
 Build 代表 GitHub Pages 部署次數，每次正式 Commit + Push 都會增加。
 
-目前的 Version 與 Build Number 集中保存在 `version.js`。除非 Project Owner 明確要求升版，否則 Version 保持不變；每次完成一輪修改並準備正式部署時才將 Build Number 加 1，未 Push 的修改不算新 Build。現在是 `Version v0.3`、`Build 025`。
+目前的 Version 與 Build Number 集中保存在 `version.js`。除非 Project Owner 明確要求升版，否則 Version 保持不變；每次完成一輪修改並準備正式部署時才將 Build Number 加 1，未 Push 的修改不算新 Build。現在是 `Version v0.3`、`Build 026`。
 
 ## 檔案
 
@@ -35,7 +35,7 @@ iPhone Safari 可透過「分享」→「加入主畫面」安裝 Easy Radio，�
 - 中廣流行網 i like radio FM103.3
 - 綠色和平廣播 FM97.3（官方 iframe 播放器 PoC）
 
-新增一般電台時，請在 `stations-data.js` 的 `stations` 陣列加入一筆物件，填入唯一的 `id`、`name`、`brand`、`streamUrl`，並可加入 `subtitle`、`frequency` 與 `keywords`。`streamUrl` 必須是已確認可播放的 HTTPS 正式入口；不得填入猜測、第三方、HTTP 或 redirect 後含 `rj-tok`／`rj-ttl` 的短效網址。綠色和平廣播目前不保存動態 HLS token，只在選取時建立官方 `iframeUrl` 播放器；播放器可收起到 viewport 外並再次顯示同一個 iframe instance，不重設 `src` 或 session。切回一般電台仍會移除 iframe，既有 `<audio>` 播放路徑維持獨立。
+新增一般電台時，請在 `stations-data.js` 的 `stations` 陣列加入一筆物件，填入唯一的 `id`、`name`、`brand`、`streamUrl`，並可加入 `subtitle`、`frequency` 與 `keywords`。`streamUrl` 必須是已確認可播放的 HTTPS 正式入口；不得填入猜測、第三方、HTTP 或 redirect 後含 `rj-tok`／`rj-ttl` 的短效網址。綠色和平廣播目前不保存動態 HLS token，只在第一次選取時建立官方 `iframeUrl` 播放器；播放器可收起到 viewport 外並再次顯示同一個 iframe instance，不重設 `src` 或 session。切到一般電台時會停放並保留同一個 iframe session；只有使用「重新載入官方播放器」才會移除並建立新 iframe。Easy Radio 不讀取或保存 token 字串，既有 `<audio>` 播放路徑維持獨立。
 
 使用者正在播放時切換電台，播放器會使用同一個 `<audio>` 元素嘗試繼續播放；使用者已暫停時切換電台，仍會維持暫停。點選目前電台不會重新載入串流，並會繼續停留在電台列表。
 

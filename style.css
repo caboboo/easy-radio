@@ -168,7 +168,14 @@ button {
   gap: 10px;
 }
 
-.embedded-station-player-toggle {
+.embedded-station-player-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.embedded-station-player-toggle,
+.embedded-station-player-reset {
   min-height: 48px;
   padding: 9px 14px;
   border: 2px solid #80684f;
@@ -181,11 +188,13 @@ button {
   -webkit-tap-highlight-color: transparent;
 }
 
-.embedded-station-player-toggle:hover {
+.embedded-station-player-toggle:hover,
+.embedded-station-player-reset:hover {
   background: #ead7bd;
 }
 
-.embedded-station-player-toggle:active {
+.embedded-station-player-toggle:active,
+.embedded-station-player-reset:active {
   transform: translateY(1px);
 }
 
@@ -211,7 +220,20 @@ button {
   background: #fff;
 }
 
-.embedded-station-player.is-collapsed #embeddedStationPlayerHost {
+.embedded-station-player.is-parked {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.embedded-station-player.is-parked .embedded-station-player-heading,
+.embedded-station-player.is-parked > p {
+  display: none;
+}
+
+.embedded-station-player.is-collapsed #embeddedStationPlayerHost,
+.embedded-station-player.is-parked #embeddedStationPlayerHost {
   position: fixed;
   top: 0;
   left: -10000px;
@@ -481,6 +503,7 @@ button {
 .settings-button:focus-visible,
 .station-search-clear:focus-visible,
 .embedded-station-player-toggle:focus-visible,
+.embedded-station-player-reset:focus-visible,
 .station-search input:focus-visible,
 html.uses-keyboard-navigation .view-toggle-button:focus,
 html.uses-keyboard-navigation .settings-button:focus {
