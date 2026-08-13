@@ -97,8 +97,9 @@
       const id = cleanText(station?.id);
       const name = cleanText(station?.name);
       const streamUrl = cleanText(station?.streamUrl);
+      const iframeUrl = cleanText(station?.iframeUrl);
 
-      if (!id || !name || !streamUrl || seenIds.has(id)) {
+      if (!id || !name || (!streamUrl && !iframeUrl) || seenIds.has(id)) {
         return false;
       }
 

@@ -36,6 +36,21 @@
         "103",
         "103.3"
       ])
+    }),
+    Object.freeze({
+      id: "greenpeace973",
+      name: "綠色和平廣播",
+      brand: "",
+      subtitle: "FM97.3",
+      frequency: "FM97.3",
+      streamUrl: "",
+      iframeUrl: "https://greenpeace.bcom.tw/playVideo.php",
+      keywords: Object.freeze([
+        "綠色和平",
+        "97.3",
+        "FM97.3",
+        "Greenpeace"
+      ])
     })
   ];
 

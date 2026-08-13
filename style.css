@@ -152,6 +152,44 @@ button {
   min-width: 0;
 }
 
+.embedded-station-player {
+  margin-top: 14px;
+  padding: clamp(12px, 2vw, 18px);
+  border: 2px solid #c9b697;
+  border-radius: 16px;
+  background: #fffdf8;
+}
+
+.embedded-station-player h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: clamp(22px, 3vw, 30px);
+}
+
+.embedded-station-player p {
+  margin: 7px 0 0;
+  color: #51483f;
+  font-size: 17px;
+  font-weight: 750;
+}
+
+#embeddedStationPlayerHost {
+  min-width: 0;
+  margin-top: 12px;
+  overflow: hidden;
+  border: 1px solid #c9b697;
+  border-radius: 12px;
+  background: #fff;
+}
+
+#embeddedStationPlayerHost iframe {
+  display: block;
+  width: 100%;
+  height: clamp(260px, 52vh, 420px);
+  border: 0;
+  background: #fff;
+}
+
 .station-empty-state {
   margin: 12px 0;
   padding: 22px 16px;

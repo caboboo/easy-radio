@@ -16,6 +16,12 @@ const stationFrequencyElement = document.getElementById("stationFrequency");
 const stationBrandLeadElement = document.getElementById("stationBrandLead");
 const stationBrandTextElement = document.getElementById("stationBrandText");
 const stationMarkElement = document.querySelector(".station-mark");
+const embeddedStationPlayerElement = document.getElementById(
+  "embeddedStationPlayer"
+);
+const embeddedStationPlayerHost = document.getElementById(
+  "embeddedStationPlayerHost"
+);
 const versionTextElement = document.getElementById("versionText");
 const buildTextElement = document.getElementById("buildText");
 const stations = Array.isArray(window.EASY_RADIO_STATIONS)
@@ -104,8 +110,20 @@ function updatePlaybackUI() {
 
   statusText.textContent = ui.message;
   playbackControls.classList.toggle("is-playing", isPlaying);
+
+  if (isEmbeddedPlayerStation(currentStation)) {
+    statusText.textContent = "請使用綠色和平官方播放器";
+    playButton.classList.remove("is-stop-action");
+    playButton.setAttribute("aria-pressed", "false");
+    playButton.setAttribute("aria-disabled", "true");
+    playIcon.textContent = "▶";
+    playText.textContent = "官方播放器";
+    return;
+  }
+
   playButton.classList.toggle("is-stop-action", canCancelPlayback);
   playButton.setAttribute("aria-pressed", String(isPlaying));
+  playButton.removeAttribute("aria-disabled");
   playIcon.textContent = canCancelPlayback ? "Ⅱ" : "▶";
   playText.textContent = shouldOfferReplay
     ? "重新播放"
@@ -132,6 +150,41 @@ function cleanStationText(value) {
   }
 
   return String(value).trim();
+}
+
+function isEmbeddedPlayerStation(station) {
+  return (
+    !cleanStationText(station?.streamUrl) &&
+    Boolean(cleanStationText(station?.iframeUrl))
+  );
+}
+
+function isSelectableStation(station) {
+  return (
+    Boolean(cleanStationText(station?.streamUrl)) ||
+    isEmbeddedPlayerStation(station)
+  );
+}
+
+function destroyEmbeddedStationPlayer() {
+  embeddedStationPlayerHost.replaceChildren();
+  embeddedStationPlayerElement.hidden = true;
+}
+
+function showEmbeddedStationPlayer(station) {
+  destroyEmbeddedStationPlayer();
+
+  if (!isEmbeddedPlayerStation(station)) {
+    return;
+  }
+
+  const iframe = document.createElement("iframe");
+  iframe.src = cleanStationText(station.iframeUrl);
+  iframe.title = `${cleanStationText(station.name)}官方播放器`;
+  iframe.allow = "autoplay";
+  iframe.loading = "eager";
+  embeddedStationPlayerHost.append(iframe);
+  embeddedStationPlayerElement.hidden = false;
 }
 
 function getStationDetailMeta(station) {
@@ -172,7 +225,7 @@ function updateStationUI(station) {
 }
 
 function initializeCurrentStation() {
-  if (!currentStation?.streamUrl) {
+  if (!isSelectableStation(currentStation)) {
     console.warn("[Easy Radio] 沒有可播放的電台資料");
     playButton.disabled = true;
     statusText.textContent = "目前沒有可播放的電台";
@@ -180,6 +233,13 @@ function initializeCurrentStation() {
   }
 
   updateStationUI(currentStation);
+
+  if (isEmbeddedPlayerStation(currentStation)) {
+    showEmbeddedStationPlayer(currentStation);
+    return;
+  }
+
+  destroyEmbeddedStationPlayer();
   radioSource.src = currentStation.streamUrl;
 }
 
@@ -194,7 +254,7 @@ function notifyStationChange(station) {
 function selectStation(stationId) {
   const nextStation = stations.find((station) => station.id === stationId);
 
-  if (!nextStation?.streamUrl) {
+  if (!isSelectableStation(nextStation)) {
     console.warn("[Easy Radio] 找不到可切換的電台", { stationId });
     return { changed: false, reason: "not-found" };
   }
@@ -220,6 +280,31 @@ function selectStation(stationId) {
   retryCount = 0;
   currentStation = nextStation;
   updateStationUI(currentStation);
+
+  if (isEmbeddedPlayerStation(currentStation)) {
+    userWantsPlayback = false;
+
+    try {
+      if (!radio.paused) {
+        radio.pause();
+      }
+
+      radioSource.removeAttribute("src");
+      radio.removeAttribute("src");
+      radio.load();
+    } catch (error) {
+      console.warn("[Easy Radio] 停止一般電台失敗", {
+        name: error?.name || "UnknownError"
+      });
+    }
+
+    setPlaybackState(PlaybackState.PAUSED);
+    showEmbeddedStationPlayer(currentStation);
+    notifyStationChange(currentStation);
+    return { changed: true, reason: "embedded-player" };
+  }
+
+  destroyEmbeddedStationPlayer();
 
   if (shouldContinuePlayback) {
     setPlaybackState(PlaybackState.RECONNECTING);
@@ -596,6 +681,10 @@ function handleBufferingSignal(eventName) {
 }
 
 playButton.addEventListener("click", () => {
+  if (isEmbeddedPlayerStation(currentStation)) {
+    return;
+  }
+
   if (userWantsPlayback) {
     pausePlaybackFromUserAction();
   } else {

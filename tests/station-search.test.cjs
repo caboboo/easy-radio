@@ -62,11 +62,15 @@ const musicStation = stations.find((station) => station.id === "bcc-i-radio");
 const popStation = stations.find(
   (station) => station.id === "bcc-i-like-radio"
 );
+const greenpeaceStation = stations.find(
+  (station) => station.id === "greenpeace973"
+);
 
 assert.equal(new Set(ids).size, ids.length);
-assert.equal(stations.length, 2);
+assert.equal(stations.length, 3);
 assert.equal(stations[0], musicStation);
 assert.equal(stations[1], popStation);
+assert.equal(stations[2], greenpeaceStation);
 assert.equal(
   musicStation.streamUrl,
   "https://stream.rcs.revma.com/ndk05tyy2tzuv"
@@ -80,9 +84,22 @@ assert.equal(
   "https://stream.rcs.revma.com/s1zttsg3qtzuv"
 );
 
-stations.forEach((station) => {
-  assert.equal(new URL(station.streamUrl).protocol, "https:");
-});
+stations
+  .filter((station) => station.streamUrl)
+  .forEach((station) => {
+    assert.equal(new URL(station.streamUrl).protocol, "https:");
+  });
+assert.equal(greenpeaceStation.name, "綠色和平廣播");
+assert.equal(greenpeaceStation.brand, "");
+assert.equal(greenpeaceStation.subtitle, "FM97.3");
+assert.equal(greenpeaceStation.frequency, "FM97.3");
+assert.equal(greenpeaceStation.streamUrl, "");
+assert.equal(
+  greenpeaceStation.iframeUrl,
+  "https://greenpeace.bcom.tw/playVideo.php"
+);
+assert.equal(new URL(greenpeaceStation.iframeUrl).protocol, "https:");
+assert.equal(new URL(greenpeaceStation.iframeUrl).search, "");
 assert.doesNotMatch(serializedStations, /aw9uqyxy2tzuv/);
 assert.doesNotMatch(serializedStations, /rj-(?:tok|ttl)|listener-cookie/i);
 assert.doesNotMatch(serializedStations, /http:\/\/bcc-app\.nmm\.com\.tw/i);
@@ -113,7 +130,16 @@ assert.doesNotMatch(serializedStations, /http:\/\/bcc-app\.nmm\.com\.tw/i);
   assert.deepEqual(filterStations(stations, query), [popStation]);
 });
 
-assert.deepEqual(filterStations(stations, "中廣"), stations);
+[
+  "綠色和平",
+  "97.3",
+  "FM97.3",
+  "Greenpeace"
+].forEach((query) => {
+  assert.deepEqual(filterStations(stations, query), [greenpeaceStation]);
+});
+
+assert.deepEqual(filterStations(stations, "中廣"), [musicStation, popStation]);
 assert.deepEqual(filterStations(stations, ""), stations);
 assert.deepEqual(filterStations(stations, "   "), stations);
 assert.deepEqual(filterStations(stations, "["), []);
