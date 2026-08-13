@@ -76,8 +76,19 @@
         aria-labelledby="embeddedStationPlayerTitle"
         hidden
       >
-        <h2 id="embeddedStationPlayerTitle">綠色和平官方播放器</h2>
-        <p>請按播放器中的「確定」開始收聽</p>
+        <div class="embedded-station-player-heading">
+          <h2 id="embeddedStationPlayerTitle">綠色和平官方播放器</h2>
+          <button
+            id="embeddedStationPlayerToggle"
+            class="embedded-station-player-toggle"
+            type="button"
+            aria-controls="embeddedStationPlayerHost"
+            aria-expanded="true"
+          >
+            收起官方播放器
+          </button>
+        </div>
+        <p id="embeddedStationPlayerStatus">請按播放器中的「確定」開始收聽</p>
         <div id="embeddedStationPlayerHost"></div>
       </section>
     </section>

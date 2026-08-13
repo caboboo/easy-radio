@@ -48,6 +48,10 @@ test("the official player host starts empty and is styled responsively", () => {
   assert.match(embeddedPlayer, /綠色和平官方播放器/);
   assert.match(embeddedPlayer, /請按播放器中的「確定」開始收聽/);
   assert.match(embeddedPlayer, /id="embeddedStationPlayerHost"/);
+  assert.match(embeddedPlayer, /id="embeddedStationPlayerToggle"/);
+  assert.match(embeddedPlayer, /aria-controls="embeddedStationPlayerHost"/);
+  assert.match(embeddedPlayer, /aria-expanded="true"/);
+  assert.match(embeddedPlayer, /收起官方播放器/);
   assert.doesNotMatch(embeddedPlayer, /<iframe\b/);
   assert.match(
     styles,
@@ -85,6 +89,53 @@ test("embedded selection stops the shared audio while normal stations keep the e
   );
 });
 
+test("collapse keeps the same iframe instance rendered offscreen", () => {
+  const toggleFunction =
+    script.match(
+      /function toggleEmbeddedStationPlayer\(\) \{[\s\S]*?\n\}/
+    )?.[0] || "";
+  const visibilityFunction =
+    script.match(
+      /function updateEmbeddedStationPlayerVisibility\(\) \{[\s\S]*?\n\}/
+    )?.[0] || "";
+
+  assert.match(toggleFunction, /isEmbeddedStationPlayerCollapsed =/);
+  assert.match(toggleFunction, /updateEmbeddedStationPlayerVisibility\(\)/);
+  assert.doesNotMatch(
+    toggleFunction,
+    /destroyEmbeddedStationPlayer|showEmbeddedStationPlayer|replaceChildren|remove\(|\.src|append\(/
+  );
+  assert.match(
+    visibilityFunction,
+    /classList\.toggle\("is-collapsed", isCollapsed\)/
+  );
+  assert.match(visibilityFunction, /"顯示官方播放器"/);
+  assert.match(visibilityFunction, /"收起官方播放器"/);
+  assert.match(visibilityFunction, /tabIndex = isCollapsed \? -1 : 0/);
+  assert.match(
+    styles,
+    /\.embedded-station-player\.is-collapsed #embeddedStationPlayerHost\s*\{[\s\S]*?position: fixed;[\s\S]*?left: -10000px;[\s\S]*?pointer-events: none;/
+  );
+  assert.doesNotMatch(styles, /\.embedded-station-player\.is-collapsed[\s\S]{0,220}display:\s*none/);
+  assert.equal((script.match(/document\.createElement\("iframe"\)/g) || []).length, 1);
+  assert.equal((script.match(/embeddedStationPlayerHost\.append\(iframe\)/g) || []).length, 1);
+});
+
+test("switching away still destroys the iframe and resets collapse state", () => {
+  const destroyFunction =
+    script.match(
+      /function destroyEmbeddedStationPlayer\(\) \{[\s\S]*?\n\}/
+    )?.[0] || "";
+
+  assert.match(destroyFunction, /embeddedStationPlayerFrame = null/);
+  assert.match(destroyFunction, /isEmbeddedStationPlayerCollapsed = false/);
+  assert.match(destroyFunction, /embeddedStationPlayerHost\.replaceChildren\(\)/);
+  assert.match(destroyFunction, /embeddedStationPlayerElement\.hidden = true/);
+  assert.match(
+    script,
+    /destroyEmbeddedStationPlayer\(\);[\s\S]*?radioSource\.src = currentStation\.streamUrl;/
+  );
+});
 test("the page still owns exactly one audio element and one shared playback button", () => {
   assert.equal((html.match(/<audio\b/g) || []).length, 1);
   assert.equal((html.match(/id="playButton"/g) || []).length, 1);

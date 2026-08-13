@@ -22,6 +22,12 @@ const embeddedStationPlayerElement = document.getElementById(
 const embeddedStationPlayerHost = document.getElementById(
   "embeddedStationPlayerHost"
 );
+const embeddedStationPlayerToggle = document.getElementById(
+  "embeddedStationPlayerToggle"
+);
+const embeddedStationPlayerStatus = document.getElementById(
+  "embeddedStationPlayerStatus"
+);
 const versionTextElement = document.getElementById("versionText");
 const buildTextElement = document.getElementById("buildText");
 const stations = Array.isArray(window.EASY_RADIO_STATIONS)
@@ -57,6 +63,8 @@ let lastPlayingTime = 0;
 let volumeBeforeMute = 1;
 let volumeAtSliderStart = 1;
 let currentStation = stations[0] || null;
+let embeddedStationPlayerFrame = null;
+let isEmbeddedStationPlayerCollapsed = false;
 
 function initializeVersionDisplay() {
   const version = releaseInfo?.version;
@@ -166,9 +174,37 @@ function isSelectableStation(station) {
   );
 }
 
+function updateEmbeddedStationPlayerVisibility() {
+  const hasIframe = embeddedStationPlayerFrame !== null;
+  const isCollapsed = hasIframe && isEmbeddedStationPlayerCollapsed;
+
+  embeddedStationPlayerElement.classList.toggle("is-collapsed", isCollapsed);
+  embeddedStationPlayerToggle.textContent = isCollapsed
+    ? "顯示官方播放器"
+    : "收起官方播放器";
+  embeddedStationPlayerToggle.setAttribute(
+    "aria-expanded",
+    String(hasIframe && !isCollapsed)
+  );
+  embeddedStationPlayerStatus.textContent = isCollapsed
+    ? "官方播放器已收起"
+    : "請按播放器中的「確定」開始收聽";
+  embeddedStationPlayerHost.setAttribute(
+    "aria-hidden",
+    String(!hasIframe || isCollapsed)
+  );
+
+  if (embeddedStationPlayerFrame) {
+    embeddedStationPlayerFrame.tabIndex = isCollapsed ? -1 : 0;
+  }
+}
+
 function destroyEmbeddedStationPlayer() {
+  embeddedStationPlayerFrame = null;
+  isEmbeddedStationPlayerCollapsed = false;
   embeddedStationPlayerHost.replaceChildren();
   embeddedStationPlayerElement.hidden = true;
+  updateEmbeddedStationPlayerVisibility();
 }
 
 function showEmbeddedStationPlayer(station) {
@@ -183,8 +219,22 @@ function showEmbeddedStationPlayer(station) {
   iframe.title = `${cleanStationText(station.name)}官方播放器`;
   iframe.allow = "autoplay";
   iframe.loading = "eager";
+  embeddedStationPlayerFrame = iframe;
   embeddedStationPlayerHost.append(iframe);
   embeddedStationPlayerElement.hidden = false;
+  updateEmbeddedStationPlayerVisibility();
+}
+
+function toggleEmbeddedStationPlayer() {
+  if (
+    !isEmbeddedPlayerStation(currentStation) ||
+    embeddedStationPlayerFrame === null
+  ) {
+    return;
+  }
+
+  isEmbeddedStationPlayerCollapsed = !isEmbeddedStationPlayerCollapsed;
+  updateEmbeddedStationPlayerVisibility();
 }
 
 function getStationDetailMeta(station) {
@@ -679,6 +729,11 @@ function handleBufferingSignal(eventName) {
 
   startBufferingWatch(eventName);
 }
+
+embeddedStationPlayerToggle.addEventListener(
+  "click",
+  toggleEmbeddedStationPlayer
+);
 
 playButton.addEventListener("click", () => {
   if (isEmbeddedPlayerStation(currentStation)) {

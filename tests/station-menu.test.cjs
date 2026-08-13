@@ -126,7 +126,7 @@ test("an empty song stays available but takes no visible space", () => {
 test("the former drawer, overlay, close button, and scroll lock stay removed", () => {
   assert.doesNotMatch(
     html,
-    /stationOverlay|stationPanel|stationCloseButton|aria-modal|aria-expanded/
+    /stationOverlay|stationPanel|stationCloseButton|aria-modal/
   );
   assert.doesNotMatch(
     viewScript,

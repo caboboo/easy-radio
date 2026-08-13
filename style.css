@@ -160,6 +160,35 @@ button {
   background: #fffdf8;
 }
 
+.embedded-station-player-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.embedded-station-player-toggle {
+  min-height: 48px;
+  padding: 9px 14px;
+  border: 2px solid #80684f;
+  border-radius: 12px;
+  background: #f2e5d2;
+  color: var(--ink);
+  font-weight: 850;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.embedded-station-player-toggle:hover {
+  background: #ead7bd;
+}
+
+.embedded-station-player-toggle:active {
+  transform: translateY(1px);
+}
+
 .embedded-station-player h2 {
   margin: 0;
   color: var(--ink);
@@ -180,6 +209,15 @@ button {
   border: 1px solid #c9b697;
   border-radius: 12px;
   background: #fff;
+}
+
+.embedded-station-player.is-collapsed #embeddedStationPlayerHost {
+  position: fixed;
+  top: 0;
+  left: -10000px;
+  width: min(760px, calc(100vw - 28px));
+  margin: 0;
+  pointer-events: none;
 }
 
 #embeddedStationPlayerHost iframe {
@@ -442,6 +480,7 @@ button {
 .view-toggle-button:focus-visible,
 .settings-button:focus-visible,
 .station-search-clear:focus-visible,
+.embedded-station-player-toggle:focus-visible,
 .station-search input:focus-visible,
 html.uses-keyboard-navigation .view-toggle-button:focus,
 html.uses-keyboard-navigation .settings-button:focus {
@@ -458,6 +497,7 @@ html.uses-keyboard-navigation .station-option:focus {
 #stationName:focus,
 html:not(.uses-keyboard-navigation) .view-toggle-button:focus,
 html:not(.uses-keyboard-navigation) .settings-button:focus,
+html:not(.uses-keyboard-navigation) .embedded-station-player-toggle:focus,
 html:not(.uses-keyboard-navigation) .station-option:focus {
   outline: none;
 }
