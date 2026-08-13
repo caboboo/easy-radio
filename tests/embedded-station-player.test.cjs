@@ -55,6 +55,16 @@ test("the official player host starts empty and is styled responsively", () => {
   assert.match(embeddedPlayer, /收起官方播放器/);
   assert.match(embeddedPlayer, /重新載入官方播放器/);
   assert.doesNotMatch(embeddedPlayer, /<iframe\b/);
+
+  const listViewStart = html.indexOf('id="stationListView"');
+  const listViewEnd = html.indexOf("</section>", listViewStart);
+  const embeddedPlayerStart = html.indexOf('id="embeddedStationPlayer"');
+  const singleViewStart = html.indexOf('id="playerView"');
+
+  assert.ok(listViewStart >= 0);
+  assert.ok(listViewEnd > listViewStart);
+  assert.ok(embeddedPlayerStart > listViewEnd);
+  assert.ok(embeddedPlayerStart > singleViewStart);
   assert.match(
     styles,
     /#embeddedStationPlayerHost iframe\s*\{[\s\S]*?width: 100%;[\s\S]*?height: clamp\(260px, 52vh, 420px\);[\s\S]*?border: 0;/
@@ -76,14 +86,14 @@ test("the iframe is created only when the embedded session does not exist", () =
   assert.doesNotMatch(script, /\.contentWindow|postMessage\s*\(/);
 });
 
-test("embedded selection stops the shared audio while normal stations keep the existing path", () => {
+test("embedded selection waits for the single view while normal stations keep the existing path", () => {
   assert.match(
     script,
-    /if \(isEmbeddedPlayerStation\(currentStation\)\) \{[\s\S]*?userWantsPlayback = false;[\s\S]*?radioSource\.removeAttribute\("src"\);[\s\S]*?radio\.load\(\);[\s\S]*?showEmbeddedStationPlayer\(currentStation\);[\s\S]*?reason: "embedded-player"/
+    /if \(isEmbeddedPlayerStation\(currentStation\)\) \{[\s\S]*?userWantsPlayback = false;[\s\S]*?radioSource\.removeAttribute\("src"\);[\s\S]*?radio\.load\(\);[\s\S]*?currentDisplayMode === "single"[\s\S]*?showEmbeddedStationPlayer\(currentStation\);[\s\S]*?parkEmbeddedStationPlayer\(\);[\s\S]*?reason: "embedded-player"/
   );
   assert.match(
     script,
-    /parkEmbeddedStationPlayer\(\);[\s\S]*?radioSource\.src = currentStation\.streamUrl;[\s\S]*?radio\.load\(\);/
+    /destroyEmbeddedStationPlayer\(\);[\s\S]*?radioSource\.src = currentStation\.streamUrl;[\s\S]*?radio\.load\(\);/
   );
   assert.match(script, /void attemptPlayback\("station-change"\)/);
   assert.match(
@@ -91,7 +101,6 @@ test("embedded selection stops the shared audio while normal stations keep the e
     /playButton\.addEventListener\("click", \(\) => \{\s*if \(isEmbeddedPlayerStation\(currentStation\)\) \{\s*return;/
   );
 });
-
 test("collapse keeps the same iframe instance rendered offscreen", () => {
   const toggleFunction =
     script.match(
@@ -136,7 +145,7 @@ test("collapse keeps the same iframe instance rendered offscreen", () => {
   );
 });
 
-test("switching away parks and restores the same iframe session", () => {
+test("view changes park and restore the same iframe session", () => {
   const showFunction =
     script.match(
       /function showEmbeddedStationPlayer\(station\) \{[\s\S]*?\n\}/
@@ -145,7 +154,12 @@ test("switching away parks and restores the same iframe session", () => {
     script.match(
       /function parkEmbeddedStationPlayer\(\) \{[\s\S]*?\n\}/
     )?.[0] || "";
+  const viewHandler =
+    script.match(
+      /function handleDisplayModeChange\(event\) \{[\s\S]*?\n\}/
+    )?.[0] || "";
 
+  assert.match(showFunction, /currentDisplayMode !== "single"/);
   assert.match(showFunction, /embeddedStationPlayerFrame === null/);
   assert.doesNotMatch(
     showFunction,
@@ -156,13 +170,23 @@ test("switching away parks and restores the same iframe session", () => {
     parkFunction,
     /destroyEmbeddedStationPlayer|replaceChildren|remove\(|\.src|createElement/
   );
+  assert.match(viewHandler, /nextDisplayMode/);
   assert.match(
-    script,
-    /embeddedStationPlayerElement\.classList\.toggle\("is-parked", isParked\)/
+    viewHandler,
+    /currentDisplayMode === "single"[\s\S]*?showEmbeddedStationPlayer\(currentStation\)/
+  );
+  assert.match(viewHandler, /parkEmbeddedStationPlayer\(\)/);
+  assert.match(
+    stationMenu,
+    /new CustomEvent\("easy-radio:view-change", \{[\s\S]*?detail: \{ displayMode \}/
   );
   assert.match(
     script,
-    /parkEmbeddedStationPlayer\(\);[\s\S]*?radioSource\.src = currentStation\.streamUrl;/
+    /document\.addEventListener\(\s*"easy-radio:view-change",\s*handleDisplayModeChange\s*\)/
+  );
+  assert.match(
+    script,
+    /embeddedStationPlayerElement\.classList\.toggle\("is-parked", isParked\)/
   );
   assert.match(
     styles,
@@ -170,6 +194,22 @@ test("switching away parks and restores the same iframe session", () => {
   );
 });
 
+test("a real station change destroys the Greenpeace iframe session", () => {
+  const selectStationFunction =
+    script.match(/function selectStation[\s\S]*?\n\}/)?.[0] || "";
+
+  assert.match(
+    selectStationFunction,
+    /if \(isEmbeddedPlayerStation\(currentStation\)\)[\s\S]*?return \{ changed: true, reason: "embedded-player" \};[\s\S]*?destroyEmbeddedStationPlayer\(\);[\s\S]*?radioSource\.src = currentStation\.streamUrl;/
+  );
+  const ordinaryStationBranch = selectStationFunction.slice(
+    selectStationFunction.indexOf("  destroyEmbeddedStationPlayer();")
+  );
+  assert.doesNotMatch(
+    ordinaryStationBranch,
+    /parkEmbeddedStationPlayer\(\);[\s\S]*?radioSource\.src = currentStation\.streamUrl;/
+  );
+});
 test("manual reset is the explicit iframe destroy and recreate recovery path", () => {
   const destroyFunction =
     script.match(

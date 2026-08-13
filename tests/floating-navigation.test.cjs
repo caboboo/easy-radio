@@ -138,7 +138,7 @@ test("navigation code remains independent from audio and station selection", () 
 
   assert.doesNotMatch(
     navigationFunctions,
-    /selectStation|audio|radio|\.src|\.load\(|\.play\(|\.pause\(|userWantsPlayback|retry|buffering/
+    /selectStation|\baudio\b|radio(?:Source)?\.|\.src|\.load\(|\.play\(|\.pause\(|userWantsPlayback|retry|buffering/
   );
   assert.equal((html.match(/<audio\b/g) || []).length, 1);
   assert.equal((html.match(/id="playButton"/g) || []).length, 1);

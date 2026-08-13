@@ -70,37 +70,6 @@
       ></p>
       <div id="stationList" class="station-list" aria-label="電台列表"></div>
 
-      <section
-        id="embeddedStationPlayer"
-        class="embedded-station-player"
-        aria-labelledby="embeddedStationPlayerTitle"
-        hidden
-      >
-        <div class="embedded-station-player-heading">
-          <h2 id="embeddedStationPlayerTitle">綠色和平官方播放器</h2>
-          <div class="embedded-station-player-actions">
-            <button
-              id="embeddedStationPlayerToggle"
-              class="embedded-station-player-toggle"
-              type="button"
-              aria-controls="embeddedStationPlayerHost"
-              aria-expanded="true"
-            >
-              收起官方播放器
-            </button>
-            <button
-              id="embeddedStationPlayerReset"
-              class="embedded-station-player-reset"
-              type="button"
-              aria-controls="embeddedStationPlayerHost"
-            >
-              重新載入官方播放器
-            </button>
-          </div>
-        </div>
-        <p id="embeddedStationPlayerStatus">請按播放器中的「確定」開始收聽</p>
-        <div id="embeddedStationPlayerHost"></div>
-      </section>
     </section>
 
     <section id="playerView" class="player-card" aria-labelledby="stationName" hidden>
@@ -121,6 +90,38 @@
           <span id="statusText">準備播放</span>
         </div>
       </div>
+    </section>
+
+    <section
+      id="embeddedStationPlayer"
+      class="embedded-station-player"
+      aria-labelledby="embeddedStationPlayerTitle"
+      hidden
+    >
+      <div class="embedded-station-player-heading">
+        <h2 id="embeddedStationPlayerTitle">綠色和平官方播放器</h2>
+        <div class="embedded-station-player-actions">
+          <button
+            id="embeddedStationPlayerToggle"
+            class="embedded-station-player-toggle"
+            type="button"
+            aria-controls="embeddedStationPlayerHost"
+            aria-expanded="true"
+          >
+            收起官方播放器
+          </button>
+          <button
+            id="embeddedStationPlayerReset"
+            class="embedded-station-player-reset"
+            type="button"
+            aria-controls="embeddedStationPlayerHost"
+          >
+            重新載入官方播放器
+          </button>
+        </div>
+      </div>
+      <p id="embeddedStationPlayerStatus">請按播放器中的「確定」開始收聽</p>
+      <div id="embeddedStationPlayerHost"></div>
     </section>
     </div>
 

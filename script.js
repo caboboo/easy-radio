@@ -68,6 +68,7 @@ let volumeAtSliderStart = 1;
 let currentStation = stations[0] || null;
 let embeddedStationPlayerFrame = null;
 let isEmbeddedStationPlayerCollapsed = false;
+let currentDisplayMode = "list";
 
 function initializeVersionDisplay() {
   const version = releaseInfo?.version;
@@ -179,7 +180,9 @@ function isSelectableStation(station) {
 
 function updateEmbeddedStationPlayerVisibility() {
   const hasIframe = embeddedStationPlayerFrame !== null;
-  const isActive = hasIframe && isEmbeddedPlayerStation(currentStation);
+  const isCurrentStation =
+    hasIframe && isEmbeddedPlayerStation(currentStation);
+  const isActive = isCurrentStation && currentDisplayMode === "single";
   const isParked = hasIframe && !isActive;
   const isCollapsed = isActive && isEmbeddedStationPlayerCollapsed;
 
@@ -221,7 +224,10 @@ function destroyEmbeddedStationPlayer() {
 }
 
 function showEmbeddedStationPlayer(station) {
-  if (!isEmbeddedPlayerStation(station)) {
+  if (
+    !isEmbeddedPlayerStation(station) ||
+    currentDisplayMode !== "single"
+  ) {
     return;
   }
 
@@ -235,7 +241,6 @@ function showEmbeddedStationPlayer(station) {
     embeddedStationPlayerHost.append(iframe);
   }
 
-  isEmbeddedStationPlayerCollapsed = false;
   updateEmbeddedStationPlayerVisibility();
 }
 
@@ -244,12 +249,35 @@ function parkEmbeddedStationPlayer() {
 }
 
 function resetEmbeddedStationPlayer() {
-  if (!isEmbeddedPlayerStation(currentStation)) {
+  if (
+    !isEmbeddedPlayerStation(currentStation) ||
+    currentDisplayMode !== "single"
+  ) {
     return;
   }
 
   destroyEmbeddedStationPlayer();
   showEmbeddedStationPlayer(currentStation);
+}
+
+function handleDisplayModeChange(event) {
+  const nextDisplayMode = event.detail?.displayMode;
+
+  if (!["single", "list", "settings"].includes(nextDisplayMode)) {
+    return;
+  }
+
+  currentDisplayMode = nextDisplayMode;
+
+  if (
+    currentDisplayMode === "single" &&
+    isEmbeddedPlayerStation(currentStation)
+  ) {
+    showEmbeddedStationPlayer(currentStation);
+    return;
+  }
+
+  parkEmbeddedStationPlayer();
 }
 
 function toggleEmbeddedStationPlayer() {
@@ -316,7 +344,7 @@ function initializeCurrentStation() {
     return;
   }
 
-  parkEmbeddedStationPlayer();
+  destroyEmbeddedStationPlayer();
   radioSource.src = currentStation.streamUrl;
 }
 
@@ -376,12 +404,18 @@ function selectStation(stationId) {
     }
 
     setPlaybackState(PlaybackState.PAUSED);
-    showEmbeddedStationPlayer(currentStation);
+
+    if (currentDisplayMode === "single") {
+      showEmbeddedStationPlayer(currentStation);
+    } else {
+      parkEmbeddedStationPlayer();
+    }
+
     notifyStationChange(currentStation);
     return { changed: true, reason: "embedded-player" };
   }
 
-  parkEmbeddedStationPlayer();
+  destroyEmbeddedStationPlayer();
 
   if (shouldContinuePlayback) {
     setPlaybackState(PlaybackState.RECONNECTING);
@@ -757,6 +791,10 @@ function handleBufferingSignal(eventName) {
   startBufferingWatch(eventName);
 }
 
+document.addEventListener(
+  "easy-radio:view-change",
+  handleDisplayModeChange
+);
 embeddedStationPlayerToggle.addEventListener(
   "click",
   toggleEmbeddedStationPlayer

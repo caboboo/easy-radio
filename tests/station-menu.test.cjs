@@ -147,6 +147,10 @@ test("view state switches three content views without controlling audio", () => 
   assert.match(viewScript, /playerView\.hidden = displayMode !== DisplayMode\.SINGLE/);
   assert.match(viewScript, /listView\.hidden = !showList/);
   assert.match(viewScript, /settingsView\.hidden = !showSettings/);
+  assert.match(
+    viewScript,
+    /new CustomEvent\("easy-radio:view-change", \{[\s\S]*?detail: \{ displayMode \}/
+  );
 
   assert.doesNotMatch(
     viewScript,

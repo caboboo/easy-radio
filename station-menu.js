@@ -351,6 +351,11 @@
     playerView.hidden = displayMode !== DisplayMode.SINGLE;
     listView.hidden = !showList;
     settingsView.hidden = !showSettings;
+    document.dispatchEvent(
+      new CustomEvent("easy-radio:view-change", {
+        detail: { displayMode }
+      })
+    );
     toggleButton.hidden = showSettings;
     settingsButton.setAttribute(
       "aria-label",
