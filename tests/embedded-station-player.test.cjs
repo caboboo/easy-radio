@@ -2,6 +2,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const test = require("node:test");
+const vm = require("node:vm");
 
 const projectRoot = path.join(__dirname, "..");
 const html = fs.readFileSync(path.join(projectRoot, "index.html"), "utf8");
@@ -93,7 +94,7 @@ test("embedded selection waits for the single view while normal stations keep th
   );
   assert.match(
     script,
-    /destroyEmbeddedStationPlayer\(\);[\s\S]*?radioSource\.src = currentStation\.streamUrl;[\s\S]*?radio\.load\(\);/
+    /parkEmbeddedStationPlayer\(\);[\s\S]*?radioSource\.src = currentStation\.streamUrl;[\s\S]*?radio\.load\(\);/
   );
   assert.match(script, /void attemptPlayback\("station-change"\)/);
   assert.match(
@@ -194,21 +195,227 @@ test("view changes park and restore the same iframe session", () => {
   );
 });
 
-test("a real station change destroys the Greenpeace iframe session", () => {
+test("station changes park and preserve the Greenpeace iframe session", () => {
+  const initializeFunction =
+    script.match(/function initializeCurrentStation[\s\S]*?\n\}/)?.[0] || "";
   const selectStationFunction =
     script.match(/function selectStation[\s\S]*?\n\}/)?.[0] || "";
+  const embeddedReturn =
+    'return { changed: true, reason: "embedded-player" };';
+  const embeddedReturnIndex = selectStationFunction.indexOf(embeddedReturn);
+
+  assert.ok(embeddedReturnIndex >= 0);
+  const ordinaryStationBranch = selectStationFunction.slice(
+    embeddedReturnIndex + embeddedReturn.length
+  );
 
   assert.match(
-    selectStationFunction,
-    /if \(isEmbeddedPlayerStation\(currentStation\)\)[\s\S]*?return \{ changed: true, reason: "embedded-player" \};[\s\S]*?destroyEmbeddedStationPlayer\(\);[\s\S]*?radioSource\.src = currentStation\.streamUrl;/
+    initializeFunction,
+    /parkEmbeddedStationPlayer\(\);[\s\S]*?radioSource\.src = currentStation\.streamUrl;/
   );
-  const ordinaryStationBranch = selectStationFunction.slice(
-    selectStationFunction.indexOf("  destroyEmbeddedStationPlayer();")
+  assert.doesNotMatch(initializeFunction, /destroyEmbeddedStationPlayer\(\)/);
+  assert.match(
+    ordinaryStationBranch,
+    /parkEmbeddedStationPlayer\(\);[\s\S]*?radioSource\.src = currentStation\.streamUrl;[\s\S]*?radio\.load\(\);/
   );
   assert.doesNotMatch(
     ordinaryStationBranch,
-    /parkEmbeddedStationPlayer\(\);[\s\S]*?radioSource\.src = currentStation\.streamUrl;/
+    /destroyEmbeddedStationPlayer|replaceChildren|remove\(|about:blank/
   );
+  assert.equal(
+    (script.match(/destroyEmbeddedStationPlayer\(\);/g) || []).length,
+    1
+  );
+});
+
+test("runtime lifecycle preserves iframe identity, src and marker until manual reload", () => {
+  const functionNames = [
+    "cleanStationText",
+    "isEmbeddedPlayerStation",
+    "updateEmbeddedStationPlayerVisibility",
+    "destroyEmbeddedStationPlayer",
+    "showEmbeddedStationPlayer",
+    "parkEmbeddedStationPlayer",
+    "resetEmbeddedStationPlayer",
+    "toggleEmbeddedStationPlayer"
+  ];
+  const functionSources = functionNames.map((name) => {
+    const source =
+      script.match(new RegExp(`function ${name}\\([\\s\\S]*?\\n\\}`))?.[0] ||
+      "";
+    assert.ok(source, `missing ${name}`);
+    return source;
+  });
+  const context = {};
+
+  vm.runInNewContext(
+    `
+      const greenpeace = {
+        name: "綠色和平廣播",
+        streamUrl: "",
+        iframeUrl: "https://greenpeace.bcom.tw/playVideo.php"
+      };
+      const ordinary = {
+        name: "中廣音樂網",
+        streamUrl: "https://example.com/live.mp3",
+        iframeUrl: ""
+      };
+      let currentStation = greenpeace;
+      let currentDisplayMode = "single";
+      let embeddedStationPlayerFrame = null;
+      let isEmbeddedStationPlayerCollapsed = false;
+      let iframeRequestCount = 0;
+      let iframeSrcAssignmentCount = 0;
+
+      function createElementState() {
+        const classes = new Set();
+        const attributes = new Map();
+        return {
+          hidden: false,
+          tabIndex: 0,
+          textContent: "",
+          classList: {
+            toggle(name, enabled) {
+              if (enabled) classes.add(name);
+              else classes.delete(name);
+              return enabled;
+            },
+            contains(name) {
+              return classes.has(name);
+            }
+          },
+          setAttribute(name, value) {
+            attributes.set(name, String(value));
+          },
+          getAttribute(name) {
+            return attributes.get(name);
+          }
+        };
+      }
+
+      const embeddedStationPlayerElement = createElementState();
+      const embeddedStationPlayerToggle = createElementState();
+      const embeddedStationPlayerReset = createElementState();
+      const embeddedStationPlayerStatus = createElementState();
+      const embeddedStationPlayerHost = {
+        ...createElementState(),
+        children: [],
+        append(frame) {
+          this.children.push(frame);
+          frame.parentNode = this;
+        },
+        replaceChildren() {
+          for (const child of this.children) child.parentNode = null;
+          this.children = [];
+        }
+      };
+      const document = {
+        createElement(tagName) {
+          if (tagName !== "iframe") throw new Error("unexpected element");
+          iframeRequestCount += 1;
+          const frame = {
+            tagName: "IFRAME",
+            title: "",
+            allow: "",
+            loading: "",
+            tabIndex: -1,
+            parentNode: null,
+            dataset: {}
+          };
+          let src = "";
+          Object.defineProperty(frame, "src", {
+            get() {
+              return src;
+            },
+            set(value) {
+              iframeSrcAssignmentCount += 1;
+              src = value;
+            }
+          });
+          return frame;
+        }
+      };
+
+      ${functionSources.join("\n")}
+
+      globalThis.lifecycle = {
+        greenpeace,
+        ordinary,
+        show: showEmbeddedStationPlayer,
+        park: parkEmbeddedStationPlayer,
+        reset: resetEmbeddedStationPlayer,
+        toggle: toggleEmbeddedStationPlayer,
+        setStation(station) {
+          currentStation = station;
+          updateEmbeddedStationPlayerVisibility();
+        },
+        setView(view) {
+          currentDisplayMode = view;
+          updateEmbeddedStationPlayerVisibility();
+        },
+        frame() {
+          return embeddedStationPlayerFrame;
+        },
+        requestCount() {
+          return iframeRequestCount;
+        },
+        srcAssignmentCount() {
+          return iframeSrcAssignmentCount;
+        },
+        hostContains(frame) {
+          return embeddedStationPlayerHost.children.includes(frame);
+        }
+      };
+    `,
+    context
+  );
+
+  const lifecycle = context.lifecycle;
+  lifecycle.show(lifecycle.greenpeace);
+  const frameA = lifecycle.frame();
+  const originalSrc = frameA.src;
+  frameA.__sessionMarker = "session-A";
+
+  assert.equal(lifecycle.requestCount(), 1);
+  assert.equal(lifecycle.srcAssignmentCount(), 1);
+  assert.ok(lifecycle.hostContains(frameA));
+
+  lifecycle.setView("list");
+  lifecycle.park();
+  lifecycle.setView("single");
+  lifecycle.show(lifecycle.greenpeace);
+  assert.equal(lifecycle.frame(), frameA);
+
+  lifecycle.setStation(lifecycle.ordinary);
+  lifecycle.park();
+  lifecycle.setView("list");
+  lifecycle.park();
+  lifecycle.setView("single");
+  lifecycle.park();
+  assert.equal(lifecycle.frame(), frameA);
+  assert.ok(lifecycle.hostContains(frameA));
+
+  lifecycle.setStation(lifecycle.greenpeace);
+  lifecycle.show(lifecycle.greenpeace);
+  lifecycle.toggle();
+  lifecycle.toggle();
+
+  assert.equal(lifecycle.frame(), frameA);
+  assert.equal(lifecycle.frame().__sessionMarker, "session-A");
+  assert.equal(lifecycle.frame().src, originalSrc);
+  assert.equal(lifecycle.requestCount(), 1);
+  assert.equal(lifecycle.srcAssignmentCount(), 1);
+
+  lifecycle.reset();
+  const frameB = lifecycle.frame();
+
+  assert.notEqual(frameB, frameA);
+  assert.equal(frameA.parentNode, null);
+  assert.ok(lifecycle.hostContains(frameB));
+  assert.equal(frameB.__sessionMarker, undefined);
+  assert.equal(frameB.src, originalSrc);
+  assert.equal(lifecycle.requestCount(), 2);
+  assert.equal(lifecycle.srcAssignmentCount(), 2);
 });
 test("manual reset is the explicit iframe destroy and recreate recovery path", () => {
   const destroyFunction =

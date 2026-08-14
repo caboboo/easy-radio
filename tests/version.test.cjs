@@ -19,7 +19,7 @@ test("version.js exposes the current Version and Build Number", () => {
 
   assert.match(releaseInfo.version, /^v\d+\.\d+$/);
   assert.equal(releaseInfo.version, "v0.3");
-  assert.equal(releaseInfo.build, 27);
+  assert.equal(releaseInfo.build, 28);
   assert.ok(Number.isInteger(releaseInfo.build));
   assert.ok(releaseInfo.build >= 1);
   assert.ok(Object.isFrozen(releaseInfo));

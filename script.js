@@ -344,7 +344,7 @@ function initializeCurrentStation() {
     return;
   }
 
-  destroyEmbeddedStationPlayer();
+  parkEmbeddedStationPlayer();
   radioSource.src = currentStation.streamUrl;
 }
 
@@ -415,7 +415,7 @@ function selectStation(stationId) {
     return { changed: true, reason: "embedded-player" };
   }
 
-  destroyEmbeddedStationPlayer();
+  parkEmbeddedStationPlayer();
 
   if (shouldContinuePlayback) {
     setPlaybackState(PlaybackState.RECONNECTING);
