@@ -1163,6 +1163,10 @@ html:not(.uses-keyboard-navigation) .station-option:focus {
 }
 
 @media (max-width: 760px) {
+  .main-content:not(.is-settings-view) {
+    margin-top: 0;
+  }
+
   .shared-playback-controls {
     grid-template-columns: 1fr;
   }
