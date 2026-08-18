@@ -71,6 +71,7 @@ button {
 }
 
 .main-content {
+  --mobile-top-spacing-offset: 56px;
   align-self: start;
   min-width: 0;
   width: min(100%, 1320px);
@@ -893,6 +894,7 @@ html:not(.uses-keyboard-navigation) .station-option:focus {
   }
 
   .main-content {
+    --mobile-top-spacing-offset: 52px;
     margin-top: 52px;
   }
 
@@ -998,6 +1000,7 @@ html:not(.uses-keyboard-navigation) .station-option:focus {
   }
 
   .main-content {
+    --mobile-top-spacing-offset: 48px;
     margin-top: 48px;
   }
 
@@ -1163,8 +1166,12 @@ html:not(.uses-keyboard-navigation) .station-option:focus {
 }
 
 @media (max-width: 760px) {
-  .main-content:not(.is-settings-view) {
+  .main-content {
     margin-top: 0;
+  }
+
+  .main-content.is-settings-view {
+    margin-bottom: var(--mobile-top-spacing-offset);
   }
 
   .shared-playback-controls {
