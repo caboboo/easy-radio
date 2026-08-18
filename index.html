@@ -38,6 +38,52 @@
       class="station-list-view"
       aria-labelledby="stationListTitle"
     >
+      <div id="stationSortControl" class="station-sort-control">
+        <button
+          id="stationSortButton"
+          class="station-sort-button"
+          type="button"
+          aria-label="電台排序"
+          title="電台排序"
+          aria-haspopup="menu"
+          aria-expanded="false"
+          aria-controls="stationSortMenu"
+        >
+          <svg
+            class="station-sort-icon"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path d="M8 6h11M8 12h8M8 18h5"></path>
+            <path d="M4 4v16M2.5 6L4 4l1.5 2M2.5 18L4 20l1.5-2"></path>
+          </svg>
+        </button>
+        <div
+          id="stationSortMenu"
+          class="station-sort-menu"
+          role="menu"
+          aria-label="電台排序方式"
+          hidden
+        >
+          <button type="button" role="menuitemradio" data-sort-mode="default">
+            <span class="station-sort-check" aria-hidden="true">✓</span>
+            <span>預設排序</span>
+          </button>
+          <button type="button" role="menuitemradio" data-sort-mode="name">
+            <span class="station-sort-check" aria-hidden="true">✓</span>
+            <span>名稱</span>
+          </button>
+          <button type="button" role="menuitemradio" data-sort-mode="frequency-asc">
+            <span class="station-sort-check" aria-hidden="true">✓</span>
+            <span>頻率低 → 高</span>
+          </button>
+          <button type="button" role="menuitemradio" data-sort-mode="frequency-desc">
+            <span class="station-sort-check" aria-hidden="true">✓</span>
+            <span>頻率高 → 低</span>
+          </button>
+        </div>
+      </div>
       <h1 id="stationListTitle">選擇電台</h1>
 
       <div id="stationSearchSection" class="station-search" hidden>
@@ -235,6 +281,7 @@
   <script src="version.js"></script>
   <script src="stations-data.js"></script>
   <script src="station-search.js"></script>
+  <script src="station-sort.js"></script>
   <script src="script.js"></script>
   <script src="station-menu.js"></script>
 </body>

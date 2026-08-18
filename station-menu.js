@@ -38,12 +38,22 @@
   const clearButton = document.getElementById("stationSearchClear");
   const searchStatus = document.getElementById("stationSearchStatus");
   const stationList = document.getElementById("stationList");
+  const sortControl = document.getElementById("stationSortControl");
+  const sortButton = document.getElementById("stationSortButton");
+  const sortMenu = document.getElementById("stationSortMenu");
+  const sortOptionButtons = Array.from(
+    sortMenu?.querySelectorAll("[data-sort-mode]") || []
+  );
+  const stationSort = window.EasyRadioStationSort;
   const sourceStations = Array.isArray(window.EASY_RADIO_STATIONS)
     ? window.EASY_RADIO_STATIONS
     : [];
   const filterStations = window.EasyRadioStationSearch?.filterStations;
   const shouldShowStationSearch =
     window.EasyRadioStationSearch?.shouldShowStationSearch;
+  const sortStations = stationSort?.sortStations;
+  const SortMode = stationSort?.SortMode;
+  const sortStorage = getStationSortStorage();
   const player = window.EasyRadioPlayer;
   const mobileDrawerMedia = window.matchMedia(MOBILE_DRAWER_QUERY);
   const drawerTabIndexes = new WeakMap();
@@ -53,6 +63,7 @@
   let drawerGesture = null;
   let drawerAvailabilityTimer = 0;
   let suppressNextDrawerClick = false;
+  let stationSortMode = SortMode?.DEFAULT || "default";
 
   if (
     !toggleButton ||
@@ -73,13 +84,31 @@
     !clearButton ||
     !searchStatus ||
     !stationList ||
+    !sortControl ||
+    !sortButton ||
+    !sortMenu ||
+    !SortMode ||
     typeof filterStations !== "function" ||
     typeof shouldShowStationSearch !== "function" ||
     typeof player?.getCurrentStation !== "function" ||
+    typeof sortStations !== "function" ||
+    typeof stationSort?.loadSortMode !== "function" ||
+    typeof stationSort?.saveSortMode !== "function" ||
+    sortOptionButtons.length !== Object.values(SortMode).length ||
     typeof player?.selectStation !== "function"
   ) {
     console.warn("[Easy Radio] 電台顯示模式無法初始化");
     return;
+  }
+
+  stationSortMode = stationSort.loadSortMode(sortStorage);
+
+  function getStationSortStorage() {
+    try {
+      return window.localStorage;
+    } catch (error) {
+      return null;
+    }
   }
 
   function cleanText(value) {
@@ -173,10 +202,62 @@
     return option;
   }
 
+  function updateStationSortSelection() {
+    sortOptionButtons.forEach((option) => {
+      option.setAttribute(
+        "aria-checked",
+        String(option.dataset.sortMode === stationSortMode)
+      );
+    });
+  }
+
+  function closeStationSortMenu({ focusButton = false } = {}) {
+    if (sortMenu.hidden) {
+      return;
+    }
+
+    sortMenu.hidden = true;
+    sortButton.setAttribute("aria-expanded", "false");
+
+    if (focusButton) {
+      sortButton.focus();
+    }
+  }
+
+  function openStationSortMenu() {
+    if (displayMode !== DisplayMode.LIST) {
+      return;
+    }
+
+    sortMenu.hidden = false;
+    sortButton.setAttribute("aria-expanded", "true");
+    const currentOption = sortOptionButtons.find(
+      (option) => option.dataset.sortMode === stationSortMode
+    );
+    currentOption?.focus();
+  }
+
+  function toggleStationSortMenu() {
+    if (sortMenu.hidden) {
+      openStationSortMenu();
+      return;
+    }
+
+    closeStationSortMenu();
+  }
+
+  function applyStationSortMode(nextMode) {
+    stationSortMode = stationSort.saveSortMode(sortStorage, nextMode);
+    updateStationSortSelection();
+    renderStations();
+    closeStationSortMenu({ focusButton: true });
+  }
+
   function renderStations() {
     const rawQuery = isSearchAvailable ? searchInput.value : "";
     const query = rawQuery.trim();
     const filteredStations = filterStations(stations, query);
+    const sortedStations = sortStations(filteredStations, stationSortMode);
 
     if (!isSearchAvailable) {
       searchInput.value = "";
@@ -211,7 +292,7 @@
     }
 
     const fragment = document.createDocumentFragment();
-    filteredStations.forEach((station) => {
+    sortedStations.forEach((station) => {
       fragment.append(createStationOption(station));
     });
     stationList.append(fragment);
@@ -347,6 +428,10 @@
     displayMode = nextMode;
     const showList = displayMode === DisplayMode.LIST;
     const showSettings = displayMode === DisplayMode.SETTINGS;
+    sortControl.hidden = !showList;
+    if (!showList) {
+      closeStationSortMenu();
+    }
 
     playerView.hidden = displayMode !== DisplayMode.SINGLE;
     listView.hidden = !showList;
@@ -397,8 +482,12 @@
     );
   }
 
-  function handleDocumentPointerdown() {
+  function handleDocumentPointerdown(event) {
     setKeyboardFocusVisibility(false);
+
+    if (!sortMenu.hidden && !sortControl.contains(event.target)) {
+      closeStationSortMenu();
+    }
   }
 
   function toggleDisplayMode() {
@@ -452,6 +541,16 @@
     openSettings();
   }
 
+  function handleStationSortMenuClick(event) {
+    const option = event.target.closest("[data-sort-mode]");
+
+    if (!option || !sortMenu.contains(option)) {
+      return;
+    }
+
+    applyStationSortMode(option.dataset.sortMode);
+  }
+
   function handleStationListClick(event) {
     const stationOption = event.target.closest(".station-option");
     const stationId = stationOption?.dataset.stationId;
@@ -470,6 +569,12 @@
     if (event.key !== "Escape") {
       return;
     }
+    if (!sortMenu.hidden) {
+      event.preventDefault();
+      closeStationSortMenu({ focusButton: true });
+      return;
+    }
+
 
     if (displayMode === DisplayMode.SETTINGS) {
       event.preventDefault();
@@ -759,6 +864,8 @@
 
   toggleButton.addEventListener("click", toggleDisplayMode);
   settingsButton.addEventListener("click", handleSettingsButtonClick);
+  sortButton.addEventListener("click", toggleStationSortMenu);
+  sortMenu.addEventListener("click", handleStationSortMenuClick);
   playbackBar.addEventListener("click", handleDrawerClickCapture, true);
   playbackBar.addEventListener("pointerdown", handleDrawerPointerDown, {
     capture: true
@@ -798,5 +905,6 @@
     mobileDrawerMedia.addListener(resetDrawerForViewport);
   }
 
+  updateStationSortSelection();
   setDisplayMode(DisplayMode.LIST);
 })();
