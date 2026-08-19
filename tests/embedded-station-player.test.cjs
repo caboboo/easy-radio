@@ -72,6 +72,39 @@ test("the official player host starts empty and is styled responsively", () => {
   );
 });
 
+test("reload is presented as a secondary recovery action", () => {
+  const embeddedPlayer =
+    html.match(
+      /<section[\s\S]*?id="embeddedStationPlayer"[\s\S]*?<\/section>/
+    )?.[0] || "";
+
+  assert.match(
+    embeddedPlayer,
+    /class="embedded-station-player-recovery"[\s\S]*?若播放器無法正常使用[\s\S]*?<button[\s\S]*?id="embeddedStationPlayerReset"[\s\S]*?class="embedded-station-player-reset embedded-station-player-recovery-action"/
+  );
+  assert.match(
+    embeddedPlayer,
+    /id="embeddedStationPlayerReset"[\s\S]*?aria-describedby="embeddedStationPlayerRecoveryHint"[\s\S]*?重新載入官方播放器[\s\S]*?<\/button>/
+  );
+  assert.match(
+    embeddedPlayer,
+    /id="embeddedStationPlayerToggle"[\s\S]*?class="embedded-station-player-toggle"[\s\S]*?收起官方播放器[\s\S]*?<\/button>/
+  );
+  assert.match(
+    styles,
+    /\.embedded-station-player-toggle\s*\{[\s\S]*?min-height: 48px;[\s\S]*?border: 2px solid #80684f;[\s\S]*?background: #f2e5d2;/
+  );
+  assert.match(
+    styles,
+    /\.embedded-station-player-reset\s*\{[\s\S]*?min-height: 44px;[\s\S]*?border: 1px solid #a58f73;[\s\S]*?background: transparent;/
+  );
+  assert.match(
+    styles,
+    /\.embedded-station-player\.is-parked \.embedded-station-player-recovery,[\s\S]*?display: none;/
+  );
+  assert.doesNotMatch(script, /\bconfirm\s*\(/);
+});
+
 test("the iframe is created only when the embedded session does not exist", () => {
   assert.match(script, /function isEmbeddedPlayerStation\(station\)/);
   assert.match(script, /document\.createElement\("iframe"\)/);

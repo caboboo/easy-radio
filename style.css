@@ -273,14 +273,7 @@ button {
   gap: 10px;
 }
 
-.embedded-station-player-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.embedded-station-player-toggle,
-.embedded-station-player-reset {
+.embedded-station-player-toggle {
   min-height: 48px;
   padding: 9px 14px;
   border: 2px solid #80684f;
@@ -293,9 +286,43 @@ button {
   -webkit-tap-highlight-color: transparent;
 }
 
-.embedded-station-player-toggle:hover,
-.embedded-station-player-reset:hover {
+.embedded-station-player-toggle:hover {
   background: #ead7bd;
+}
+
+.embedded-station-player-recovery {
+  display: grid;
+  justify-items: end;
+  gap: 4px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #e3d7c3;
+}
+
+.embedded-station-player .embedded-station-player-recovery-hint {
+  margin: 0;
+  color: #6a5f53;
+  font-size: 16px;
+  font-weight: 650;
+  text-align: right;
+}
+
+.embedded-station-player-reset {
+  min-height: 44px;
+  padding: 7px 12px;
+  border: 1px solid #a58f73;
+  border-radius: 10px;
+  background: transparent;
+  color: #5f4e3e;
+  font-size: 16px;
+  font-weight: 750;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.embedded-station-player-reset:hover {
+  background: #f7efe2;
 }
 
 .embedded-station-player-toggle:active,
@@ -333,6 +360,7 @@ button {
 }
 
 .embedded-station-player.is-parked .embedded-station-player-heading,
+.embedded-station-player.is-parked .embedded-station-player-recovery,
 .embedded-station-player.is-parked > p {
   display: none;
 }
@@ -652,6 +680,7 @@ html.uses-keyboard-navigation .station-option:focus {
 html:not(.uses-keyboard-navigation) .view-toggle-button:focus,
 html:not(.uses-keyboard-navigation) .settings-button:focus,
 html:not(.uses-keyboard-navigation) .embedded-station-player-toggle:focus,
+html:not(.uses-keyboard-navigation) .embedded-station-player-reset:focus,
 html:not(.uses-keyboard-navigation) .station-sort-button:focus,
 html:not(.uses-keyboard-navigation) .station-sort-menu button:focus,
 html:not(.uses-keyboard-navigation) .station-option:focus {
