@@ -202,7 +202,7 @@ function updateEmbeddedStationPlayerVisibility() {
   );
   embeddedStationPlayerStatus.textContent = isCollapsed
     ? "官方播放器已收起"
-    : "請按播放器中的「確定」開始收聽";
+    : "若播放器出現「確定」，請先按下開始收聽";
   embeddedStationPlayerHost.setAttribute(
     "aria-hidden",
     String(!isActive || isCollapsed)

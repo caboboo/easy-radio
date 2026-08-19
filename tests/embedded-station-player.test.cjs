@@ -47,7 +47,10 @@ test("the official player host starts empty and is styled responsively", () => {
     )?.[0] || "";
 
   assert.match(embeddedPlayer, /綠色和平官方播放器/);
-  assert.match(embeddedPlayer, /請按播放器中的「確定」開始收聽/);
+  assert.match(embeddedPlayer, /若播放器出現「確定」，請先按下開始收聽/);
+  assert.doesNotMatch(embeddedPlayer, /請按播放器中的「確定」開始收聽/);
+  assert.match(script, /若播放器出現「確定」，請先按下開始收聽/);
+  assert.doesNotMatch(script, /請按播放器中的「確定」開始收聽/);
   assert.match(embeddedPlayer, /id="embeddedStationPlayerHost"/);
   assert.match(embeddedPlayer, /id="embeddedStationPlayerToggle"/);
   assert.match(embeddedPlayer, /id="embeddedStationPlayerReset"/);
