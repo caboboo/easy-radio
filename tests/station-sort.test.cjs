@@ -2,6 +2,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const test = require("node:test");
+const vm = require("node:vm");
 
 const projectRoot = path.resolve(__dirname, "..");
 const stations = require("../stations-data.js");
@@ -35,6 +36,73 @@ function createStorage(initialValue = null) {
       values.set(key, String(value));
     }
   };
+}
+
+function getFunctionSource(functionName) {
+  return stationMenu.match(
+    new RegExp(`function ${functionName}\\([^)]*\\) \\{[\\s\\S]*?\\n  \\}`)
+  )?.[0] || "";
+}
+
+function createStationRendererHarness(currentStationId = stations[0].id) {
+  class FakeElement {
+    constructor(tagName) {
+      this.tagName = tagName;
+      this.children = [];
+      this.className = "";
+      this.dataset = {};
+      this.attributes = {};
+      this.textContent = "";
+      this.type = "";
+    }
+
+    append(...children) {
+      this.children.push(...children);
+    }
+
+    setAttribute(name, value) {
+      this.attributes[name] = String(value);
+    }
+  }
+
+  const functionNames = [
+    "cleanText",
+    "appendText",
+    "getStationMetaText",
+    "isFrequencySortMode",
+    "getFrequencySortMetaText",
+    "createStationOption"
+  ];
+  const source = `(() => {
+    let stationSortMode = SortMode.DEFAULT;
+    ${functionNames.map(getFunctionSource).join("\n")}
+    return {
+      create(station) { return createStationOption(station); },
+      setMode(mode) { stationSortMode = mode; }
+    };
+  })()`;
+  const context = {
+    SortMode,
+    document: {
+      createElement(tagName) {
+        return new FakeElement(tagName);
+      }
+    },
+    player: {
+      getCurrentStation() {
+        return stations.find(station => station.id === currentStationId);
+      }
+    }
+  };
+
+  return vm.runInNewContext(source, context);
+}
+
+function getRenderedText(element) {
+  return [
+    element.textContent,
+    ...element.children.flatMap(getRenderedText)
+  ].filter(Boolean);
 }
 
 test("station sort modes and storage key stay small and explicit", () => {
@@ -97,6 +165,133 @@ test("frequency sorting compares numeric FM values in both directions", () => {
   );
 });
 
+test("only frequency sort modes use the frequency-first presentation", () => {
+  const modeHelper = getFunctionSource("isFrequencySortMode");
+
+  assert.match(modeHelper, /mode === SortMode\.FREQUENCY_ASC/);
+  assert.match(modeHelper, /mode === SortMode\.FREQUENCY_DESC/);
+  assert.doesNotMatch(modeHelper, /SortMode\.(?:DEFAULT|NAME)/);
+  assert.match(
+    stationMenu,
+    /stationList\.dataset\.sortLayout = isFrequencySortMode\(stationSortMode\)[\s\S]*?"frequency"[\s\S]*?"standard"/
+  );
+  assert.match(
+    stationMenu,
+    /option\.className = usesFrequencyLayout[\s\S]*?"station-option is-frequency-sort"[\s\S]*?"station-option"/
+  );
+});
+
+test("frequency-first cards read station data directly without duplicate frequency", () => {
+  const frequencyMetaHelper = getFunctionSource("getFrequencySortMetaText");
+  const renderer = getFunctionSource("createStationOption");
+
+  assert.match(frequencyMetaHelper, /cleanText\(station\?\.brand\)/);
+  assert.match(frequencyMetaHelper, /cleanText\(station\?\.frequency\)/);
+  assert.match(
+    frequencyMetaHelper,
+    /return brand \|\| \(subtitle !== frequency \? subtitle : ""\)/
+  );
+  assert.match(renderer, /"station-option-frequency",\s*station\.frequency/);
+  assert.match(renderer, /getFrequencySortMetaText\(station\)/);
+  assert.match(renderer, /getStationMetaText\(station\)/);
+  assert.doesNotMatch(renderer, /match\(|replace\(|split\(|\d\+|parseFloat/);
+
+  const frequencyDisplays = stations.map((station) => ({
+    frequency: station.frequency,
+    meta: station.brand ||
+      (station.subtitle !== station.frequency ? station.subtitle : "")
+  }));
+
+  assert.deepEqual(frequencyDisplays, [
+    { frequency: "FM96.3", meta: "i Radio" },
+    { frequency: "FM103.3", meta: "i like radio" },
+    { frequency: "FM97.3", meta: "" }
+  ]);
+});
+
+test("rendered cards switch layouts immediately and preserve the current badge", () => {
+  const renderer = createStationRendererHarness();
+  const musicStation = stations.find(station => station.id === "bcc-i-radio");
+  const greenpeace = stations.find(station => station.id === "greenpeace973");
+
+  const defaultCard = renderer.create(musicStation);
+  assert.equal(defaultCard.className, "station-option");
+  assert.deepEqual(getRenderedText(defaultCard), [
+    "中廣音樂網",
+    "\u2713 目前電台",
+    "i Radio · FM96.3"
+  ]);
+  assert.equal(defaultCard.attributes["aria-pressed"], "true");
+
+  renderer.setMode(SortMode.FREQUENCY_ASC);
+  const frequencyCard = renderer.create(musicStation);
+  assert.equal(frequencyCard.className, "station-option is-frequency-sort");
+  assert.deepEqual(getRenderedText(frequencyCard), [
+    "FM96.3",
+    "中廣音樂網",
+    "\u2713 目前電台",
+    "i Radio"
+  ]);
+  assert.equal(
+    getRenderedText(frequencyCard).filter(text => text.includes("FM96.3")).length,
+    1
+  );
+
+  const greenpeaceCard = renderer.create(greenpeace);
+  assert.deepEqual(getRenderedText(greenpeaceCard), [
+    "FM97.3",
+    "綠色和平廣播"
+  ]);
+
+  renderer.setMode(SortMode.NAME);
+  assert.equal(renderer.create(musicStation).className, "station-option");
+});
+
+test("frequency-first CSS keeps a stable scan column without changing the card target", () => {
+  const frequencyCardRule = styles.match(
+    /\.station-option\.is-frequency-sort\s*\{[\s\S]*?\}/
+  )?.[0] || "";
+  const frequencyTextRule = styles.match(
+    /\.station-option-frequency\s*\{[\s\S]*?\}/
+  )?.[0] || "";
+
+  assert.match(
+    frequencyCardRule,
+    /grid-template-columns:\s*86px minmax\(0, 1fr\)/
+  );
+  assert.match(frequencyTextRule, /font-variant-numeric:\s*tabular-nums/);
+  assert.match(frequencyTextRule, /white-space:\s*nowrap/);
+  assert.match(stationMenu, /event\.target\.closest\("\.station-option"\)/);
+  assert.equal((stationMenu.match(/document\.createElement\("button"\)/g) || []).length, 1);
+});
+
+test("frequency-first columns remain bounded at phone and landscape widths", () => {
+  const detailsRule = styles.match(
+    /\.station-option-details\s*\{[\s\S]*?\}/
+  )?.[0] || "";
+  const portraitRules = styles.match(
+    /@media \(max-width: 480px\) and \(orientation: portrait\)\s*\{[\s\S]*?\n\}/
+  )?.[0] || "";
+  const landscapeRules = styles.match(
+    /@media \(max-width: 900px\) and \(max-height: 500px\) and \(orientation: landscape\)\s*\{[\s\S]*?\n\}/
+  )?.[0] || "";
+
+  assert.match(detailsRule, /min-width:\s*0/);
+  assert.match(
+    portraitRules,
+    /grid-template-columns:\s*78px minmax\(0, 1fr\)/
+  );
+  assert.match(
+    landscapeRules,
+    /grid-template-columns:\s*76px minmax\(0, 1fr\)/
+  );
+  assert.match(styles, /\.station-option-name\s*\{[\s\S]*?overflow-wrap:\s*anywhere/);
+  assert.match(
+    landscapeRules,
+    /\.station-list\s*\{[\s\S]*?repeat\(2, minmax\(0, 1fr\)\)/
+  );
+});
+
 test("missing or invalid storage safely falls back to default", () => {
   assert.equal(loadSortMode(createStorage()), SortMode.DEFAULT);
   assert.equal(loadSortMode(createStorage("")), SortMode.DEFAULT);
@@ -125,6 +320,17 @@ test("valid sorting preferences save and load without storing station data", () 
     SortMode.DEFAULT
   );
   assert.equal(loadSortMode(storage), SortMode.DEFAULT);
+});
+
+test("stored frequency mode is loaded before the initial list render", () => {
+  assert.ok(
+    stationMenu.indexOf("stationSortMode = stationSort.loadSortMode(sortStorage)") <
+      stationMenu.indexOf("setDisplayMode(DisplayMode.LIST)")
+  );
+  assert.match(
+    stationMenu,
+    /applyStationSortMode\(nextMode\)[\s\S]*?saveSortMode\(sortStorage, nextMode\)[\s\S]*?renderStations\(\)/
+  );
 });
 
 test("All Stations owns one accessible sorting control with four options", () => {

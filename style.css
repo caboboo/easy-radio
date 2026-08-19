@@ -382,6 +382,28 @@ button {
   touch-action: manipulation;
 }
 
+.station-option.is-frequency-sort {
+  grid-template-columns: 86px minmax(0, 1fr);
+  align-items: center;
+  gap: 0 14px;
+}
+
+.station-option-frequency {
+  align-self: start;
+  color: #4a2b12;
+  font-size: 21px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.station-option-details {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+}
+
 .station-option[aria-pressed="true"] {
   border-color: #5b4634;
   background: #fff8eb;
@@ -1111,6 +1133,15 @@ html:not(.uses-keyboard-navigation) .station-option:focus {
     padding: 12px;
   }
 
+  .station-option.is-frequency-sort {
+    grid-template-columns: 78px minmax(0, 1fr);
+    gap: 0 10px;
+  }
+
+  .station-option-frequency {
+    font-size: 19px;
+  }
+
   .station-search-clear {
     min-height: 46px;
     padding: 7px 11px;
@@ -1281,6 +1312,15 @@ html:not(.uses-keyboard-navigation) .station-option:focus {
   .station-option {
     min-height: 76px;
     padding: 10px;
+  }
+
+  .station-option.is-frequency-sort {
+    grid-template-columns: 76px minmax(0, 1fr);
+    gap: 0 8px;
+  }
+
+  .station-option-frequency {
+    font-size: 18px;
   }
 
   .station-option-name {

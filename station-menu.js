@@ -168,13 +168,31 @@
     return subtitle || brand || frequency;
   }
 
+  function isFrequencySortMode(mode) {
+    return (
+      mode === SortMode.FREQUENCY_ASC ||
+      mode === SortMode.FREQUENCY_DESC
+    );
+  }
+
+  function getFrequencySortMetaText(station) {
+    const brand = cleanText(station?.brand);
+    const subtitle = cleanText(station?.subtitle);
+    const frequency = cleanText(station?.frequency);
+
+    return brand || (subtitle !== frequency ? subtitle : "");
+  }
+
   function createStationOption(station) {
     const currentStation = player.getCurrentStation();
     const isCurrent = currentStation?.id === station.id;
+    const usesFrequencyLayout = isFrequencySortMode(stationSortMode);
     const option = document.createElement("button");
     const heading = document.createElement("span");
 
-    option.className = "station-option";
+    option.className = usesFrequencyLayout
+      ? "station-option is-frequency-sort"
+      : "station-option";
     option.type = "button";
     option.dataset.stationId = station.id;
     option.setAttribute("aria-pressed", String(isCurrent));
@@ -191,13 +209,33 @@
       );
     }
 
-    option.append(heading);
-    appendText(
-      option,
-      "span",
-      "station-option-subtitle",
-      getStationMetaText(station)
-    );
+    if (usesFrequencyLayout) {
+      const details = document.createElement("span");
+
+      details.className = "station-option-details";
+      details.append(heading);
+      appendText(
+        details,
+        "span",
+        "station-option-subtitle",
+        getFrequencySortMetaText(station)
+      );
+      appendText(
+        option,
+        "span",
+        "station-option-frequency",
+        station.frequency
+      );
+      option.append(details);
+    } else {
+      option.append(heading);
+      appendText(
+        option,
+        "span",
+        "station-option-subtitle",
+        getStationMetaText(station)
+      );
+    }
 
     return option;
   }
@@ -269,6 +307,9 @@
         ? `搜尋結果 ${filteredStations.length} 個電台`
         : `共 ${stations.length} 個電台`
       : "";
+    stationList.dataset.sortLayout = isFrequencySortMode(stationSortMode)
+      ? "frequency"
+      : "standard";
     stationList.replaceChildren();
 
     if (stations.length === 0) {
