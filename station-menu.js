@@ -582,6 +582,10 @@
     openSettings();
   }
 
+  function handleShowCurrentStationRequest() {
+    setDisplayMode(DisplayMode.SINGLE);
+  }
+
   function handleStationSortMenuClick(event) {
     const option = event.target.closest("[data-sort-mode]");
 
@@ -936,6 +940,10 @@
   document.addEventListener("keydown", handleDocumentKeydown);
   document.addEventListener("pointerdown", handleDocumentPointerdown);
   document.addEventListener("easy-radio:station-change", renderStations);
+  document.addEventListener(
+    "easy-radio:show-current-station",
+    handleShowCurrentStationRequest
+  );
   document.addEventListener("visibilitychange", handleVisibilityChange);
   window.addEventListener("resize", resetDrawerForViewport);
   window.addEventListener("orientationchange", resetDrawerForViewport);

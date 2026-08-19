@@ -135,7 +135,7 @@ test("embedded selection waits for the single view while normal stations keep th
   assert.match(script, /void attemptPlayback\("station-change"\)/);
   assert.match(
     script,
-    /playButton\.addEventListener\("click", \(\) => \{\s*if \(isEmbeddedPlayerStation\(currentStation\)\) \{\s*return;/
+    /playButton\.addEventListener\("click", \(\) => \{\s*if \(isEmbeddedPlayerStation\(currentStation\)\) \{\s*activateEmbeddedStationPlayerControl\(\);\s*return;/
   );
 });
 test("collapse keeps the same iframe instance rendered offscreen", () => {
@@ -302,6 +302,8 @@ test("runtime lifecycle preserves iframe identity, src and marker until manual r
       let isEmbeddedStationPlayerCollapsed = false;
       let iframeRequestCount = 0;
       let iframeSrcAssignmentCount = 0;
+
+      function updatePlaybackUI() {}
 
       function createElementState() {
         const classes = new Set();

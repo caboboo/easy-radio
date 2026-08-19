@@ -3,6 +3,7 @@ const radioSource = document.getElementById("radioSource");
 const playButton = document.getElementById("playButton");
 const playbackControls = document.querySelector(".floating-playback-bar");
 const playIcon = document.getElementById("playIcon");
+const officialPlayerIcon = document.getElementById("officialPlayerIcon");
 const playText = document.getElementById("playText");
 const statusText = document.getElementById("statusText");
 const desktopVolume = document.getElementById("desktopVolume");
@@ -124,18 +125,27 @@ function updatePlaybackUI() {
   playbackControls.classList.toggle("is-playing", isPlaying);
 
   if (isEmbeddedPlayerStation(currentStation)) {
+    const controlLabel = getEmbeddedPlayerControlLabel();
+
     statusText.textContent = "請使用綠色和平官方播放器";
     playButton.classList.remove("is-stop-action");
-    playButton.setAttribute("aria-pressed", "false");
-    playButton.setAttribute("aria-disabled", "true");
-    playIcon.textContent = "▶";
-    playText.textContent = "官方播放器";
+    playButton.classList.add("is-official-player-action");
+    playButton.removeAttribute("aria-pressed");
+    playButton.removeAttribute("aria-disabled");
+    playButton.setAttribute("aria-label", controlLabel);
+    playIcon.hidden = true;
+    officialPlayerIcon.toggleAttribute("hidden", false);
+    playText.textContent = controlLabel;
     return;
   }
 
+  playButton.classList.remove("is-official-player-action");
   playButton.classList.toggle("is-stop-action", canCancelPlayback);
   playButton.setAttribute("aria-pressed", String(isPlaying));
   playButton.removeAttribute("aria-disabled");
+  playButton.removeAttribute("aria-label");
+  playIcon.hidden = false;
+  officialPlayerIcon.toggleAttribute("hidden", true);
   playIcon.textContent = canCancelPlayback ? "Ⅱ" : "▶";
   playText.textContent = shouldOfferReplay
     ? "重新播放"
@@ -178,6 +188,16 @@ function isSelectableStation(station) {
   );
 }
 
+function getEmbeddedPlayerControlLabel() {
+  if (currentDisplayMode !== "single") {
+    return "前往官方播放器";
+  }
+
+  return isEmbeddedStationPlayerCollapsed
+    ? "顯示官方播放器"
+    : "官方播放器";
+}
+
 function updateEmbeddedStationPlayerVisibility() {
   const hasIframe = embeddedStationPlayerFrame !== null;
   const isCurrentStation =
@@ -214,6 +234,8 @@ function updateEmbeddedStationPlayerVisibility() {
   if (hasIframe) {
     embeddedStationPlayerFrame.tabIndex = isActive && !isCollapsed ? 0 : -1;
   }
+
+  updatePlaybackUI();
 }
 
 function destroyEmbeddedStationPlayer() {
@@ -290,6 +312,39 @@ function toggleEmbeddedStationPlayer() {
 
   isEmbeddedStationPlayerCollapsed = !isEmbeddedStationPlayerCollapsed;
   updateEmbeddedStationPlayerVisibility();
+}
+
+function scrollEmbeddedStationPlayerIntoView() {
+  if (
+    currentDisplayMode !== "single" ||
+    embeddedStationPlayerFrame === null
+  ) {
+    return;
+  }
+
+  embeddedStationPlayerElement.scrollIntoView({ block: "start" });
+}
+
+function activateEmbeddedStationPlayerControl() {
+  if (!isEmbeddedPlayerStation(currentStation)) {
+    return;
+  }
+
+  if (currentDisplayMode !== "single") {
+    document.dispatchEvent(
+      new CustomEvent("easy-radio:show-current-station")
+    );
+  }
+
+  if (currentDisplayMode !== "single") {
+    return;
+  }
+
+  if (isEmbeddedStationPlayerCollapsed) {
+    toggleEmbeddedStationPlayer();
+  }
+
+  scrollEmbeddedStationPlayerIntoView();
 }
 
 function getStationDetailMeta(station) {
@@ -806,6 +861,7 @@ embeddedStationPlayerReset.addEventListener(
 
 playButton.addEventListener("click", () => {
   if (isEmbeddedPlayerStation(currentStation)) {
+    activateEmbeddedStationPlayerControl();
     return;
   }
 
