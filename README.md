@@ -11,7 +11,7 @@ Version 代表產品版本，由 Project Owner 決定。
 
 Build 代表 GitHub Pages 部署次數，每次正式 Commit + Push 都會增加。
 
-目前的 Version 與 Build Number 集中保存在 `version.js`。除非 Project Owner 明確要求升版，否則 Version 保持不變；每次完成一輪修改並準備正式部署時才將 Build Number 加 1，未 Push 的修改不算新 Build。現在是 `Version v0.3`、`Build 031`。
+目前的 Version 與 Build Number 集中保存在 `version.js`。除非 Project Owner 明確要求升版，否則 Version 保持不變；每次完成一輪修改並準備正式部署時才將 Build Number 加 1，未 Push 的修改不算新 Build。現在是 `Version v0.3`、`Build 032`。
 
 ## 檔案
 
@@ -33,6 +33,7 @@ iPhone Safari 可透過「分享」→「加入主畫面」安裝 Easy Radio，�
 Build 029 只縮減手機版 All Stations 與 Current Station 上方的多餘留白，並保留 iPhone Safe Area；播放流程、iframe lifecycle、電台資料與控制項均未修改。
 Build 030 讓手機版 Settings 採用 Build 029 建立的頂部視覺原則，縮減多餘留白並保留 iPhone Safe Area；播放、電台、iframe lifecycle 與控制項均未修改。
 Build 031 在 All Stations 加入預設、名稱、頻率低至高與頻率高至低四種排序，並只以 localStorage 保存排序模式；排序只改變列表呈現順序，不修改 station data、播放流程或 Greenpeace iframe lifecycle。
+Build 032 將 All Stations 的排序控制改為固定於 viewport 的右上浮動控制，列表捲動時按鈕與選單仍維持相互錨定；排序行為與已保存偏好完全不變，也未修改電台、播放或 Greenpeace iframe lifecycle。
 
 電台列表是每次開啟或重新整理 Easy Radio 時的預設首頁。list 與 single 的模式切換按鈕位於底部漂浮播放控制列最左側，採用動作導向圖示：list 顯示單一畫面圖示，按下進入目前電台；single 顯示列表圖示，按下回到所有電台；settings 中隱藏模式按鈕。切換顯示模式不會中斷音訊，本次沒有修改電台卡片、播放流程或播放器資訊。詳細頁只顯示現有電台 Logo、名稱、品牌與頻率，播放仍由全域漂浮播放控制列負責，不建立第二套播放控制；本次沒有加入節目、主持人或節目表資料。播放／暫停與平台支援的音量控制固定漂浮在畫面底部，single、list、settings 三種模式共用同一組控制。播放按鈕以動作顯色：綠色代表播放或重新嘗試，紅色代表暫停或取消播放。只有播放狀態真正進入 playing 時，控制列背景才會顯示低調的純 CSS 模擬音量柱；其他狀態維持靜止，偏好減少動態效果時也不播放動畫，且不分析實際音訊。沒有實際曲目資料時，曲目列不會顯示。整張電台卡片都能使用滑鼠、觸控或鍵盤直接選台，選台後會繼續停留在列表，目前電台以「✓ 目前電台」文字標記。列表模式按 Escape 不會離開首頁。手機版的設定入口位於底部滑動抽屜：日常位置顯示模式與播放按鈕，向左滑顯示設定齒輪、向右滑回模式按鈕；進入 settings 後，同一顆底部按鈕原地切換為 X。手勢辨識已針對較短的快速左右撥動與自然斜向滑動調整，並降低距離吸附門檻，同時保留點擊／拖曳防誤觸；畫面、播放與選台流程不變。底部控制面板現在由外層在 capture phase 統一接收按鈕、文字、圖示與空白處的 pointer 手勢，裝飾性子元素不再干擾拖曳；輕點功能、滑動距離、畫面與播放流程維持不變。另針對按鈕起點的 implicit pointer capture 移交，忽略子按鈕冒泡的 lostpointercapture，避免把正常拖曳誤判為取消；UI、手勢靈敏度與播放流程維持不變。桌面版仍由右上漂浮齒輪進入，settings 中同一顆右上按鈕切換為 X。按 X 或 Escape 都會回到進入前的畫面，設定頁原本的頁內返回按鈕已移除。設定頁目前只有完整骨架與「目前尚無可調整的設定」空狀態。Version／Build 顯示已移到設定頁底部，漂浮播放控制列在設定頁仍可使用。本次沒有加入實際設定選項、帳號、後端或持久化設定。電台少於 6 個時不顯示搜尋區，達到 6 個以上時才顯示電台名稱、副標題、頻率與關鍵字搜尋。目前電台卡片使用低調咖啡色選取外觀，並保留中性色的「✓ 目前電台」標籤；這只呈現目前選取項目，不改變選台、播放流程或既有狀態語意。目前收錄：
 

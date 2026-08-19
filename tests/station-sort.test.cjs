@@ -15,6 +15,7 @@ const {
   sortStations
 } = require("../station-sort.js");
 const html = fs.readFileSync(path.join(projectRoot, "index.html"), "utf8");
+const styles = fs.readFileSync(path.join(projectRoot, "style.css"), "utf8");
 const stationMenu = fs.readFileSync(
   path.join(projectRoot, "station-menu.js"),
   "utf8"
@@ -145,6 +146,30 @@ test("All Stations owns one accessible sorting control with four options", () =>
   assert.doesNotMatch(playerView, /stationSort/);
   assert.doesNotMatch(settingsView, /stationSort/);
   assert.equal((html.match(/id="stationSortButton"/g) || []).length, 1);
+});
+
+test("sorting control and menu stay viewport-fixed and safely layered", () => {
+  const controlRule = styles.match(
+    /\.station-sort-control\s*\{[\s\S]*?\}/
+  )?.[0] || "";
+  const menuRule = styles.match(
+    /\.station-sort-menu\s*\{[\s\S]*?\}/
+  )?.[0] || "";
+
+  assert.match(controlRule, /position:\s*fixed/);
+  assert.match(
+    controlRule,
+    /top:\s*calc\(14px \+ env\(safe-area-inset-top\)\)/
+  );
+  assert.match(
+    controlRule,
+    /right:\s*calc\(14px \+ env\(safe-area-inset-right\)\)/
+  );
+  assert.match(controlRule, /z-index:\s*15/);
+  assert.match(menuRule, /position:\s*absolute/);
+  assert.match(menuRule, /top:\s*calc\(100% \+ 8px\)/);
+  assert.match(menuRule, /right:\s*0/);
+  assert.doesNotMatch(controlRule, /position:\s*(?:absolute|sticky)/);
 });
 
 test("menu state, outside click, selection, and view changes close safely", () => {
