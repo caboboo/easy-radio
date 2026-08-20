@@ -101,6 +101,35 @@ test("reload is presented as a secondary recovery action", () => {
   assert.doesNotMatch(script, /\bconfirm\s*\(/);
 });
 
+test("normal player content precedes the single recovery section", () => {
+  const embeddedPlayer =
+    html.match(
+      /<section[\s\S]*?id="embeddedStationPlayer"[\s\S]*?<\/section>/
+    )?.[0] || "";
+  const helperIndex = embeddedPlayer.indexOf('id="embeddedStationPlayerStatus"');
+  const hostIndex = embeddedPlayer.indexOf('id="embeddedStationPlayerHost"');
+  const recoveryIndex = embeddedPlayer.indexOf(
+    'class="embedded-station-player-recovery"'
+  );
+
+  assert.ok(helperIndex >= 0);
+  assert.ok(hostIndex > helperIndex);
+  assert.ok(recoveryIndex > hostIndex);
+  assert.equal(
+    (embeddedPlayer.match(/class="embedded-station-player-recovery"/g) || [])
+      .length,
+    1
+  );
+  assert.equal(
+    (embeddedPlayer.match(/id="embeddedStationPlayerReset"/g) || []).length,
+    1
+  );
+  assert.match(
+    styles,
+    /@media \(max-width: 760px\) \{[\s\S]*?\.embedded-station-player-recovery\s*\{[\s\S]*?margin-bottom: 64px;/
+  );
+});
+
 test("the iframe is created only when the embedded session does not exist", () => {
   assert.match(script, /function isEmbeddedPlayerStation\(station\)/);
   assert.match(script, /document\.createElement\("iframe"\)/);

@@ -1385,6 +1385,10 @@ html:not(.uses-keyboard-navigation) .station-option:focus {
 }
 
 @media (max-width: 760px) {
+  .embedded-station-player-recovery {
+    margin-bottom: 64px;
+  }
+
   .main-content {
     margin-top: 0;
   }
