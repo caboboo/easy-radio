@@ -667,10 +667,6 @@
   }
 
   function getDrawerSnapPosition(gesture, travelDistance, deltaX, velocity) {
-    if (!gesture.canMove) {
-      return DrawerPosition.SETTINGS_REVEALED;
-    }
-
     const drawerMovement = gesture.currentOffset - gesture.startOffset;
     const progress = Math.abs(drawerMovement) / travelDistance;
     const flingTarget = getDirectionalDrawerPosition(
@@ -774,12 +770,13 @@
     }
 
     event.preventDefault();
+    const travelDistance = getDrawerTravelDistance();
+    drawerGesture.currentOffset = clampDrawerOffset(
+      drawerGesture.startOffset + deltaX,
+      travelDistance
+    );
+
     if (drawerGesture.canMove) {
-      const travelDistance = getDrawerTravelDistance();
-      drawerGesture.currentOffset = clampDrawerOffset(
-        drawerGesture.startOffset + deltaX,
-        travelDistance
-      );
       playbackBar.style.setProperty(
         "--mobile-drawer-offset",
         `${drawerGesture.currentOffset}px`
@@ -826,8 +823,20 @@
       deltaX,
       velocity
     );
+    const shouldReturnFromSettings =
+      displayMode === DisplayMode.SETTINGS &&
+      nextPosition === DrawerPosition.PRIMARY;
 
-    finishDrawerGesture(nextPosition, true);
+    finishDrawerGesture(
+      shouldReturnFromSettings
+        ? DrawerPosition.SETTINGS_REVEALED
+        : nextPosition,
+      true
+    );
+
+    if (shouldReturnFromSettings) {
+      returnFromSettings();
+    }
   }
 
   function cancelDrawerGesture(event) {

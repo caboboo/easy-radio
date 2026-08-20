@@ -159,7 +159,7 @@ test("pointer gestures clamp, cancel, and reset to legal drawer positions", () =
   assert.match(viewScript, /document\.addEventListener\("visibilitychange", handleVisibilityChange\)/);
 });
 
-test("a drag suppresses only its click and settings remains locked in place", () => {
+test("Settings uses the existing drawer thresholds without moving its controls", () => {
   assert.match(viewScript, /suppressNextDrawerClick = false;[\s\S]*?drawerGesture = \{/);
   assert.match(viewScript, /if \(suppressClick\) \{[\s\S]*?suppressNextDrawerClick = true;/);
   assert.match(
@@ -172,11 +172,19 @@ test("a drag suppresses only its click and settings remains locked in place", ()
   );
   assert.match(
     viewScript,
-    /if \(drawerGesture\.canMove\) \{[\s\S]*?--mobile-drawer-offset/
+    /drawerGesture\.currentOffset = clampDrawerOffset\([\s\S]*?if \(drawerGesture\.canMove\) \{[\s\S]*?--mobile-drawer-offset/
   );
   assert.match(
     viewScript,
     /if \(!drawerGesture\.canMove\) \{[\s\S]*?nextPosition = DrawerPosition\.SETTINGS_REVEALED;/
+  );
+  assert.match(
+    viewScript,
+    /const shouldReturnFromSettings =[\s\S]*?displayMode === DisplayMode\.SETTINGS[\s\S]*?nextPosition === DrawerPosition\.PRIMARY/
+  );
+  assert.match(
+    viewScript,
+    /if \(shouldReturnFromSettings\) \{[\s\S]*?returnFromSettings\(\);/
   );
 });
 
@@ -298,7 +306,10 @@ function extractDrawerFunction(name) {
   return match[0];
 }
 
-function createDrawerGestureHarness(initialPosition = "primary") {
+function createDrawerGestureHarness(
+  initialPosition = "primary",
+  { initialDisplayMode = "list", returnMode = "list" } = {}
+) {
   const capturedPointers = new Set();
   const activeClasses = new Set();
   const customStyles = new Map();
@@ -350,10 +361,13 @@ function createDrawerGestureHarness(initialPosition = "primary") {
   const makeHarness = new Function(
     "playbackBar",
     "initialPosition",
+    "initialDisplayMode",
+    "returnMode",
     `
       "use strict";
       const DisplayMode = Object.freeze({
         LIST: "list",
+        SINGLE: "single",
         SETTINGS: "settings"
       });
       const DrawerPosition = Object.freeze({
@@ -376,10 +390,11 @@ function createDrawerGestureHarness(initialPosition = "primary") {
           }
         }
       };
-      let displayMode = DisplayMode.LIST;
+      let displayMode = initialDisplayMode;
       let drawerPosition = initialPosition;
       let drawerGesture = null;
       let suppressNextDrawerClick = false;
+      let returnFromSettingsCalls = 0;
 
       function isMobileDrawer() {
         return true;
@@ -399,6 +414,16 @@ function createDrawerGestureHarness(initialPosition = "primary") {
         playbackBar.style.removeProperty("--mobile-drawer-offset");
       }
 
+      function returnFromSettings() {
+        if (displayMode !== DisplayMode.SETTINGS) {
+          return;
+        }
+
+        returnFromSettingsCalls += 1;
+        displayMode = returnMode;
+        setDrawerPosition(DrawerPosition.PRIMARY);
+      }
+
       ${functions}
 
       return {
@@ -410,6 +435,7 @@ function createDrawerGestureHarness(initialPosition = "primary") {
         clickCapture: handleDrawerClickCapture,
         state() {
           return {
+            displayMode,
             drawerPosition,
             gesture: drawerGesture
               ? {
@@ -420,6 +446,7 @@ function createDrawerGestureHarness(initialPosition = "primary") {
                 }
               : null,
             suppressNextDrawerClick,
+            returnFromSettingsCalls,
             draggingClass: playbackBar.classList.contains(
               "is-drawer-dragging"
             )
@@ -431,7 +458,12 @@ function createDrawerGestureHarness(initialPosition = "primary") {
 
   return {
     playbackBar,
-    ...makeHarness(playbackBar, initialPosition)
+    ...makeHarness(
+      playbackBar,
+      initialPosition,
+      initialDisplayMode,
+      returnMode
+    )
   };
 }
 
@@ -621,4 +653,140 @@ test("a completed button drag suppresses exactly its derived click", () => {
   };
   harness.clickCapture(nextClick);
   assert.equal(nextClick.prevented, false);
+});
+
+test("Settings right swipe uses the same return path for both previous views", () => {
+  const starts = [
+    { target: createControlTarget("playButton"), returnMode: "list" },
+    { target: { id: "playbackBar" }, returnMode: "single" }
+  ];
+
+  for (const { target, returnMode } of starts) {
+    const harness = createDrawerGestureHarness("settings-revealed", {
+      initialDisplayMode: "settings",
+      returnMode
+    });
+
+    beginHorizontalDrag(harness, target, 100, 110);
+    harness.pointerMove(
+      createPointerEvent({ target, clientX: 118 })
+    );
+    harness.pointerUp(
+      createPointerEvent({ target, clientX: 118 })
+    );
+
+    assert.equal(harness.state().displayMode, returnMode);
+    assert.equal(harness.state().drawerPosition, "primary");
+    assert.equal(harness.state().returnFromSettingsCalls, 1);
+    assert.equal(harness.state().suppressNextDrawerClick, true);
+  }
+});
+
+test("Settings left, short, and vertical gestures stay open", () => {
+  const playButton = createControlTarget("playButton");
+  const gestures = [
+    [
+      createPointerEvent({ target: playButton, clientX: 100 }),
+      createPointerEvent({ target: playButton, clientX: 80 })
+    ],
+    [
+      createPointerEvent({ target: playButton, clientX: 100 }),
+      createPointerEvent({ target: playButton, clientX: 108 })
+    ],
+    [
+      createPointerEvent({ target: playButton, clientX: 100 }),
+      createPointerEvent({ target: playButton, clientX: 102, clientY: 20 })
+    ]
+  ];
+
+  for (const [start, end] of gestures) {
+    const harness = createDrawerGestureHarness("settings-revealed", {
+      initialDisplayMode: "settings"
+    });
+
+    harness.pointerDown(start);
+    harness.pointerMove(end);
+    harness.pointerUp(end);
+
+    assert.equal(harness.state().displayMode, "settings");
+    assert.equal(harness.state().drawerPosition, "settings-revealed");
+    assert.equal(harness.state().returnFromSettingsCalls, 0);
+    assert.equal(harness.state().gesture, null);
+  }
+});
+
+test("Settings cancellation and capture loss never close the view", () => {
+  const playButton = createControlTarget("playButton");
+  const canceledHarness = createDrawerGestureHarness("settings-revealed", {
+    initialDisplayMode: "settings"
+  });
+
+  beginHorizontalDrag(canceledHarness, playButton, 100, 118);
+  canceledHarness.pointerCancel(
+    createPointerEvent({ target: canceledHarness.playbackBar, clientX: 118 })
+  );
+  assert.equal(canceledHarness.state().displayMode, "settings");
+  assert.equal(canceledHarness.state().returnFromSettingsCalls, 0);
+  assert.equal(canceledHarness.state().gesture, null);
+
+  const captureHarness = createDrawerGestureHarness("settings-revealed", {
+    initialDisplayMode: "settings"
+  });
+  beginHorizontalDrag(captureHarness, playButton, 100, 110);
+  captureHarness.lostPointerCapture(
+    createPointerEvent({ target: playButton, clientX: 110 })
+  );
+  assert.equal(captureHarness.state().gesture?.dragging, true);
+
+  captureHarness.lostPointerCapture(
+    createPointerEvent({ target: captureHarness.playbackBar, clientX: 110 })
+  );
+  assert.equal(captureHarness.state().displayMode, "settings");
+  assert.equal(captureHarness.state().returnFromSettingsCalls, 0);
+  assert.equal(captureHarness.state().gesture, null);
+});
+
+test("Settings swipe suppresses its click while a tap preserves button action", () => {
+  const playButton = createControlTarget("playButton");
+  const swipeHarness = createDrawerGestureHarness("settings-revealed", {
+    initialDisplayMode: "settings"
+  });
+
+  beginHorizontalDrag(swipeHarness, playButton, 100, 118);
+  swipeHarness.pointerUp(
+    createPointerEvent({ target: playButton, clientX: 118 })
+  );
+  const swipeClick = {
+    detail: 1,
+    prevented: false,
+    stopped: false,
+    preventDefault() {
+      this.prevented = true;
+    },
+    stopImmediatePropagation() {
+      this.stopped = true;
+    }
+  };
+  swipeHarness.clickCapture(swipeClick);
+  assert.equal(swipeClick.prevented, true);
+  assert.equal(swipeClick.stopped, true);
+
+  const tapHarness = createDrawerGestureHarness("settings-revealed", {
+    initialDisplayMode: "settings"
+  });
+  const tapEvent = createPointerEvent({ target: playButton, clientX: 100 });
+  tapHarness.pointerDown(tapEvent);
+  tapHarness.pointerUp(tapEvent);
+  const tapClick = {
+    detail: 1,
+    prevented: false,
+    preventDefault() {
+      this.prevented = true;
+    },
+    stopImmediatePropagation() {}
+  };
+  tapHarness.clickCapture(tapClick);
+  assert.equal(tapClick.prevented, false);
+  assert.equal(tapHarness.state().displayMode, "settings");
+  assert.equal(tapHarness.state().returnFromSettingsCalls, 0);
 });
