@@ -266,28 +266,7 @@ button {
 }
 
 .embedded-station-player-heading {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.embedded-station-player-toggle {
-  min-height: 48px;
-  padding: 9px 14px;
-  border: 2px solid #80684f;
-  border-radius: 12px;
-  background: #f2e5d2;
-  color: var(--ink);
-  font-weight: 850;
-  cursor: pointer;
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.embedded-station-player-toggle:hover {
-  background: #ead7bd;
+  min-width: 0;
 }
 
 .embedded-station-player-recovery {
@@ -325,7 +304,6 @@ button {
   background: #f7efe2;
 }
 
-.embedded-station-player-toggle:active,
 .embedded-station-player-reset:active {
   transform: translateY(1px);
 }
@@ -657,7 +635,6 @@ button {
 .view-toggle-button:focus-visible,
 .settings-button:focus-visible,
 .station-search-clear:focus-visible,
-.embedded-station-player-toggle:focus-visible,
 .embedded-station-player-reset:focus-visible,
 .station-search input:focus-visible,
 html.uses-keyboard-navigation .view-toggle-button:focus,
@@ -679,7 +656,6 @@ html.uses-keyboard-navigation .station-option:focus {
 #stationName:focus,
 html:not(.uses-keyboard-navigation) .view-toggle-button:focus,
 html:not(.uses-keyboard-navigation) .settings-button:focus,
-html:not(.uses-keyboard-navigation) .embedded-station-player-toggle:focus,
 html:not(.uses-keyboard-navigation) .embedded-station-player-reset:focus,
 html:not(.uses-keyboard-navigation) .station-sort-button:focus,
 html:not(.uses-keyboard-navigation) .station-sort-menu button:focus,

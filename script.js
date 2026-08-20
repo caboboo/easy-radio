@@ -23,9 +23,6 @@ const embeddedStationPlayerElement = document.getElementById(
 const embeddedStationPlayerHost = document.getElementById(
   "embeddedStationPlayerHost"
 );
-const embeddedStationPlayerToggle = document.getElementById(
-  "embeddedStationPlayerToggle"
-);
 const embeddedStationPlayerReset = document.getElementById(
   "embeddedStationPlayerReset"
 );
@@ -195,7 +192,7 @@ function getEmbeddedPlayerControlLabel() {
 
   return isEmbeddedStationPlayerCollapsed
     ? "顯示官方播放器"
-    : "官方播放器";
+    : "收起官方播放器";
 }
 
 function updateEmbeddedStationPlayerVisibility() {
@@ -213,13 +210,6 @@ function updateEmbeddedStationPlayerVisibility() {
     "aria-hidden",
     String(!isActive)
   );
-  embeddedStationPlayerToggle.textContent = isCollapsed
-    ? "顯示官方播放器"
-    : "收起官方播放器";
-  embeddedStationPlayerToggle.setAttribute(
-    "aria-expanded",
-    String(isActive && !isCollapsed)
-  );
   embeddedStationPlayerStatus.textContent = isCollapsed
     ? "官方播放器已收起"
     : "若播放器出現「確定」，請先按下開始收聽";
@@ -228,7 +218,6 @@ function updateEmbeddedStationPlayerVisibility() {
     String(!isActive || isCollapsed)
   );
 
-  embeddedStationPlayerToggle.tabIndex = isActive ? 0 : -1;
   embeddedStationPlayerReset.tabIndex = isActive ? 0 : -1;
 
   if (hasIframe) {
@@ -330,7 +319,9 @@ function activateEmbeddedStationPlayerControl() {
     return;
   }
 
-  if (currentDisplayMode !== "single") {
+  const shouldTogglePlayer = currentDisplayMode === "single";
+
+  if (!shouldTogglePlayer) {
     document.dispatchEvent(
       new CustomEvent("easy-radio:show-current-station")
     );
@@ -340,11 +331,13 @@ function activateEmbeddedStationPlayerControl() {
     return;
   }
 
-  if (isEmbeddedStationPlayerCollapsed) {
+  if (shouldTogglePlayer || isEmbeddedStationPlayerCollapsed) {
     toggleEmbeddedStationPlayer();
   }
 
-  scrollEmbeddedStationPlayerIntoView();
+  if (!isEmbeddedStationPlayerCollapsed) {
+    scrollEmbeddedStationPlayerIntoView();
+  }
 }
 
 function getStationDetailMeta(station) {
@@ -849,10 +842,6 @@ function handleBufferingSignal(eventName) {
 document.addEventListener(
   "easy-radio:view-change",
   handleDisplayModeChange
-);
-embeddedStationPlayerToggle.addEventListener(
-  "click",
-  toggleEmbeddedStationPlayer
 );
 embeddedStationPlayerReset.addEventListener(
   "click",

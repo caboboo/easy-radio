@@ -57,9 +57,13 @@ test("Greenpeace labels follow the existing view and collapsed state", () => {
   context.control.setView("settings");
   assert.equal(context.control.label(), "前往官方播放器");
   context.control.setView("single");
-  assert.equal(context.control.label(), "官方播放器");
+  assert.equal(context.control.label(), "收起官方播放器");
   context.control.setCollapsed(true);
   assert.equal(context.control.label(), "顯示官方播放器");
+  assert.doesNotMatch(
+    getFunctionSource("getEmbeddedPlayerControlLabel"),
+    /return "官方播放器"/
+  );
   assert.doesNotMatch(script, /回到官方播放器/);
 });
 
@@ -92,10 +96,14 @@ test("the Greenpeace bottom action only navigates, reveals and scrolls", () => {
   );
 
   assert.match(activateFunction, /currentDisplayMode !== "single"/);
+  assert.match(
+    activateFunction,
+    /const shouldTogglePlayer = currentDisplayMode === "single"/
+  );
   assert.match(activateFunction, /new CustomEvent\("easy-radio:show-current-station"\)/);
   assert.match(
     activateFunction,
-    /isEmbeddedStationPlayerCollapsed[\s\S]*?toggleEmbeddedStationPlayer\(\)/
+    /shouldTogglePlayer \|\| isEmbeddedStationPlayerCollapsed[\s\S]*?toggleEmbeddedStationPlayer\(\)/
   );
   assert.match(activateFunction, /scrollEmbeddedStationPlayerIntoView\(\)/);
   assert.match(
@@ -122,17 +130,22 @@ test("official-player navigation reuses the central Current Station view switch"
   assert.doesNotMatch(stationMenu, /closeSettingsForGreenpeaceOnly/);
 });
 
-test("upper show and hide keep the bottom label synchronized", () => {
+test("the Bottom Control is the only show and hide interaction", () => {
   const visibilityFunction = getFunctionSource(
     "updateEmbeddedStationPlayerVisibility"
   );
   const toggleFunction = getFunctionSource("toggleEmbeddedStationPlayer");
 
-  assert.match(visibilityFunction, /"顯示官方播放器"/);
-  assert.match(visibilityFunction, /"收起官方播放器"/);
   assert.match(visibilityFunction, /updatePlaybackUI\(\)/);
+  assert.doesNotMatch(html, /id="embeddedStationPlayerToggle"/);
+  assert.doesNotMatch(script, /embeddedStationPlayerToggle/);
+  assert.doesNotMatch(styles, /\.embedded-station-player-toggle/);
   assert.match(toggleFunction, /isEmbeddedStationPlayerCollapsed =/);
   assert.match(toggleFunction, /updateEmbeddedStationPlayerVisibility\(\)/);
+  assert.match(
+    getFunctionSource("activateEmbeddedStationPlayerControl"),
+    /toggleEmbeddedStationPlayer\(\)/
+  );
 });
 
 test("the display icon preserves the large responsive control", () => {

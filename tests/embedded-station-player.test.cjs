@@ -52,12 +52,11 @@ test("the official player host starts empty and is styled responsively", () => {
   assert.match(script, /若播放器出現「確定」，請先按下開始收聽/);
   assert.doesNotMatch(script, /請按播放器中的「確定」開始收聽/);
   assert.match(embeddedPlayer, /id="embeddedStationPlayerHost"/);
-  assert.match(embeddedPlayer, /id="embeddedStationPlayerToggle"/);
   assert.match(embeddedPlayer, /id="embeddedStationPlayerReset"/);
   assert.match(embeddedPlayer, /aria-controls="embeddedStationPlayerHost"/);
-  assert.match(embeddedPlayer, /aria-expanded="true"/);
-  assert.match(embeddedPlayer, /收起官方播放器/);
   assert.match(embeddedPlayer, /重新載入官方播放器/);
+  assert.doesNotMatch(embeddedPlayer, /id="embeddedStationPlayerToggle"/);
+  assert.doesNotMatch(embeddedPlayer, /class="embedded-station-player-toggle"/);
   assert.doesNotMatch(embeddedPlayer, /<iframe\b/);
 
   const listViewStart = html.indexOf('id="stationListView"');
@@ -89,14 +88,8 @@ test("reload is presented as a secondary recovery action", () => {
     embeddedPlayer,
     /id="embeddedStationPlayerReset"[\s\S]*?aria-describedby="embeddedStationPlayerRecoveryHint"[\s\S]*?重新載入官方播放器[\s\S]*?<\/button>/
   );
-  assert.match(
-    embeddedPlayer,
-    /id="embeddedStationPlayerToggle"[\s\S]*?class="embedded-station-player-toggle"[\s\S]*?收起官方播放器[\s\S]*?<\/button>/
-  );
-  assert.match(
-    styles,
-    /\.embedded-station-player-toggle\s*\{[\s\S]*?min-height: 48px;[\s\S]*?border: 2px solid #80684f;[\s\S]*?background: #f2e5d2;/
-  );
+  assert.doesNotMatch(embeddedPlayer, /embeddedStationPlayerToggle/);
+  assert.doesNotMatch(styles, /\.embedded-station-player-toggle/);
   assert.match(
     styles,
     /\.embedded-station-player-reset\s*\{[\s\S]*?min-height: 44px;[\s\S]*?border: 1px solid #a58f73;[\s\S]*?background: transparent;/
@@ -158,12 +151,8 @@ test("collapse keeps the same iframe instance rendered offscreen", () => {
     visibilityFunction,
     /classList\.toggle\("is-collapsed", isCollapsed\)/
   );
-  assert.match(visibilityFunction, /"顯示官方播放器"/);
-  assert.match(visibilityFunction, /"收起官方播放器"/);
-  assert.match(
-    visibilityFunction,
-    /tabIndex = isActive && !isCollapsed \? 0 : -1/
-  );
+  assert.match(visibilityFunction, /"官方播放器已收起"/);
+  assert.doesNotMatch(visibilityFunction, /embeddedStationPlayerToggle/);
   assert.match(
     styles,
     /\.embedded-station-player\.is-collapsed #embeddedStationPlayerHost,[\s\S]*?position: fixed;[\s\S]*?left: -10000px;[\s\S]*?pointer-events: none;/
@@ -332,7 +321,6 @@ test("runtime lifecycle preserves iframe identity, src and marker until manual r
       }
 
       const embeddedStationPlayerElement = createElementState();
-      const embeddedStationPlayerToggle = createElementState();
       const embeddedStationPlayerReset = createElementState();
       const embeddedStationPlayerStatus = createElementState();
       const embeddedStationPlayerHost = {
@@ -435,8 +423,9 @@ test("runtime lifecycle preserves iframe identity, src and marker until manual r
 
   lifecycle.setStation(lifecycle.greenpeace);
   lifecycle.show(lifecycle.greenpeace);
-  lifecycle.toggle();
-  lifecycle.toggle();
+  for (let index = 0; index < 6; index += 1) {
+    lifecycle.toggle();
+  }
 
   assert.equal(lifecycle.frame(), frameA);
   assert.equal(lifecycle.frame().__sessionMarker, "session-A");
