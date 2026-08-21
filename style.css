@@ -269,6 +269,12 @@ button {
   min-width: 0;
 }
 
+.station-option-shell {
+  position: relative;
+  min-width: 0;
+  height: 100%;
+}
+
 .embedded-station-player-recovery {
   display: grid;
   justify-items: end;
@@ -386,6 +392,45 @@ button {
   text-align: left;
   cursor: pointer;
   touch-action: manipulation;
+}
+
+.station-option-shell .station-option {
+  padding-right: 68px;
+}
+
+.station-favorite-button {
+  width: 48px;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 13px;
+  background: transparent;
+  color: #7b5318;
+  font: inherit;
+  font-size: 29px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.station-option-favorite {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1;
+}
+
+.station-favorite-button:hover {
+  background: rgba(123, 83, 24, 0.08);
+}
+
+.station-favorite-button:active {
+  transform: translateY(1px);
 }
 
 .station-option.is-frequency-sort {
@@ -646,9 +691,11 @@ html.uses-keyboard-navigation .settings-button:focus {
 .station-sort-button:focus-visible,
 .station-sort-menu button:focus-visible,
 .station-option:focus-visible,
+.station-favorite-button:focus-visible,
 html.uses-keyboard-navigation .station-sort-button:focus,
 html.uses-keyboard-navigation .station-sort-menu button:focus,
-html.uses-keyboard-navigation .station-option:focus {
+html.uses-keyboard-navigation .station-option:focus,
+html.uses-keyboard-navigation .station-favorite-button:focus {
   outline: 3px solid #5b4634;
   outline-offset: 3px;
 }
@@ -659,7 +706,8 @@ html:not(.uses-keyboard-navigation) .settings-button:focus,
 html:not(.uses-keyboard-navigation) .embedded-station-player-reset:focus,
 html:not(.uses-keyboard-navigation) .station-sort-button:focus,
 html:not(.uses-keyboard-navigation) .station-sort-menu button:focus,
-html:not(.uses-keyboard-navigation) .station-option:focus {
+html:not(.uses-keyboard-navigation) .station-option:focus,
+html:not(.uses-keyboard-navigation) .station-favorite-button:focus {
   outline: none;
 }
 
@@ -726,6 +774,19 @@ html:not(.uses-keyboard-navigation) .station-option:focus {
   gap: clamp(8px, 1.5vw, 16px);
   align-content: center;
   justify-items: start;
+}
+
+.station-identity-heading {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
+}
+
+.current-station-favorite-button {
+  justify-self: end;
 }
 
 .station-info h1 {
@@ -1159,6 +1220,15 @@ html:not(.uses-keyboard-navigation) .station-option:focus {
     gap: 0 10px;
   }
 
+  .station-option.is-frequency-sort .station-option-heading {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+  }
+
+  .station-option.is-frequency-sort .current-station-label {
+    justify-self: start;
+  }
+
   .station-option-frequency {
     font-size: 19px;
   }
@@ -1338,6 +1408,15 @@ html:not(.uses-keyboard-navigation) .station-option:focus {
   .station-option.is-frequency-sort {
     grid-template-columns: 76px minmax(0, 1fr);
     gap: 0 8px;
+  }
+
+  .station-option.is-frequency-sort .station-option-heading {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 3px;
+  }
+
+  .station-option.is-frequency-sort .current-station-label {
+    justify-self: start;
   }
 
   .station-option-frequency {

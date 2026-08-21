@@ -124,6 +124,30 @@ test("default sorting restores source order without mutating the source", () => 
   assert.deepEqual(stations, sourceSnapshot);
 });
 
+test("default sorting puts favorites first while preserving source order in both groups", () => {
+  const sourceSnapshot = stations.slice();
+  const favoriteIds = ["bcc-i-like-radio", "greenpeace973"];
+
+  assert.deepEqual(
+    sortStations(stations, SortMode.DEFAULT, favoriteIds).map(
+      (station) => station.id
+    ),
+    ["bcc-i-like-radio", "greenpeace973", "bcc-i-radio"]
+  );
+  assert.deepEqual(stations, sourceSnapshot);
+});
+
+test("name and frequency modes ignore favorites", () => {
+  [SortMode.NAME, SortMode.FREQUENCY_ASC, SortMode.FREQUENCY_DESC].forEach(
+    (mode) => {
+      assert.deepEqual(
+        sortStations(stations, mode, ["greenpeace973"]),
+        sortStations(stations, mode)
+      );
+    }
+  );
+});
+
 test("name sorting uses display names and remains stable for equal names", () => {
   const equalNames = [
     { id: "first", name: "同名電台" },
@@ -262,7 +286,7 @@ test("frequency-first CSS keeps a stable scan column without changing the card t
   assert.match(frequencyTextRule, /font-variant-numeric:\s*tabular-nums/);
   assert.match(frequencyTextRule, /white-space:\s*nowrap/);
   assert.match(stationMenu, /event\.target\.closest\("\.station-option"\)/);
-  assert.equal((stationMenu.match(/document\.createElement\("button"\)/g) || []).length, 1);
+  assert.equal((stationMenu.match(/document\.createElement\("button"\)/g) || []).length, 2);
 });
 
 test("frequency-first columns remain bounded at phone and landscape widths", () => {
@@ -408,7 +432,10 @@ test("sorting preserves station IDs and never touches player or iframe state", (
     /function handleStationListClick\(event\) \{[\s\S]*?\n  \}/
   )?.[0] || "";
 
-  assert.match(renderFunction, /sortStations\(filteredStations, stationSortMode\)/);
+  assert.match(
+    renderFunction,
+    /sortStations\([\s\S]*?filteredStations,[\s\S]*?stationSortMode,[\s\S]*?stationFavorites\.getFavoriteIds\(\)/
+  );
   assert.match(renderFunction, /sortedStations\.forEach/);
   assert.match(stationMenu, /option\.dataset\.stationId = station\.id/);
   assert.match(stationSelection, /player\.selectStation\(stationId\)/);

@@ -178,6 +178,7 @@ test("the project does not register a service worker", () => {
     "script.js",
     "station-menu.js",
     "station-sort.js",
+    "station-favorites.js",
     "station-search.js"
   ].map(fileName =>
     fs.readFileSync(path.join(projectRoot, fileName), "utf8")

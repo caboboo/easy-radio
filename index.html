@@ -126,7 +126,16 @@
       </div>
 
       <div class="station-info">
-        <h1 id="stationName" tabindex="-1"></h1>
+        <div class="station-identity-heading">
+          <h1 id="stationName" tabindex="-1"></h1>
+          <button
+            id="currentStationFavoriteButton"
+            class="station-favorite-button current-station-favorite-button"
+            type="button"
+            aria-label="將目前電台加入我的最愛"
+            aria-pressed="false"
+          >☆</button>
+        </div>
         <p id="stationSubtitle" class="frequency"></p>
         <p class="station-detail-status">目前電台</p>
 
@@ -291,6 +300,7 @@
   <script src="stations-data.js"></script>
   <script src="station-search.js"></script>
   <script src="station-sort.js"></script>
+  <script src="station-favorites.js"></script>
   <script src="script.js"></script>
   <script src="station-menu.js"></script>
 </body>

@@ -38,6 +38,9 @@
   const clearButton = document.getElementById("stationSearchClear");
   const searchStatus = document.getElementById("stationSearchStatus");
   const stationList = document.getElementById("stationList");
+  const currentStationFavoriteButton = document.getElementById(
+    "currentStationFavoriteButton"
+  );
   const sortControl = document.getElementById("stationSortControl");
   const sortButton = document.getElementById("stationSortButton");
   const sortMenu = document.getElementById("stationSortMenu");
@@ -45,6 +48,7 @@
     sortMenu?.querySelectorAll("[data-sort-mode]") || []
   );
   const stationSort = window.EasyRadioStationSort;
+  const stationFavorites = window.EasyRadioStationFavorites;
   const sourceStations = Array.isArray(window.EASY_RADIO_STATIONS)
     ? window.EASY_RADIO_STATIONS
     : [];
@@ -84,6 +88,7 @@
     !clearButton ||
     !searchStatus ||
     !stationList ||
+    !currentStationFavoriteButton ||
     !sortControl ||
     !sortButton ||
     !sortMenu ||
@@ -94,6 +99,9 @@
     typeof sortStations !== "function" ||
     typeof stationSort?.loadSortMode !== "function" ||
     typeof stationSort?.saveSortMode !== "function" ||
+    typeof stationFavorites?.getFavoriteIds !== "function" ||
+    typeof stationFavorites?.isFavorite !== "function" ||
+    typeof stationFavorites?.toggle !== "function" ||
     sortOptionButtons.length !== Object.values(SortMode).length ||
     typeof player?.selectStation !== "function"
   ) {
@@ -240,6 +248,58 @@
     return option;
   }
 
+  function getFavoriteAccessibleName(station, isFavorite) {
+    return isFavorite
+      ? `從我的最愛移除${station.name}`
+      : `將${station.name}加入我的最愛`;
+  }
+
+  function updateFavoriteButton(button, station) {
+    const isFavorite = stationFavorites.isFavorite(station.id);
+
+    button.textContent = isFavorite ? "★" : "☆";
+    button.setAttribute("aria-pressed", String(isFavorite));
+    button.setAttribute(
+      "aria-label",
+      getFavoriteAccessibleName(station, isFavorite)
+    );
+  }
+
+  function createStationFavoriteButton(station) {
+    const button = document.createElement("button");
+
+    button.className = "station-favorite-button station-option-favorite";
+    button.type = "button";
+    button.dataset.stationId = station.id;
+    updateFavoriteButton(button, station);
+
+    return button;
+  }
+
+  function createStationListItem(station) {
+    const item = document.createElement("div");
+
+    item.className = "station-option-shell";
+    item.append(
+      createStationOption(station),
+      createStationFavoriteButton(station)
+    );
+
+    return item;
+  }
+
+  function updateCurrentStationFavorite() {
+    const currentStation = player.getCurrentStation();
+
+    if (!currentStation) {
+      currentStationFavoriteButton.hidden = true;
+      return;
+    }
+
+    currentStationFavoriteButton.hidden = false;
+    updateFavoriteButton(currentStationFavoriteButton, currentStation);
+  }
+
   function updateStationSortSelection() {
     sortOptionButtons.forEach((option) => {
       option.setAttribute(
@@ -295,7 +355,11 @@
     const rawQuery = isSearchAvailable ? searchInput.value : "";
     const query = rawQuery.trim();
     const filteredStations = filterStations(stations, query);
-    const sortedStations = sortStations(filteredStations, stationSortMode);
+    const sortedStations = sortStations(
+      filteredStations,
+      stationSortMode,
+      stationFavorites.getFavoriteIds()
+    );
 
     if (!isSearchAvailable) {
       searchInput.value = "";
@@ -334,7 +398,7 @@
 
     const fragment = document.createDocumentFragment();
     sortedStations.forEach((station) => {
-      fragment.append(createStationOption(station));
+      fragment.append(createStationListItem(station));
     });
     stationList.append(fragment);
   }
@@ -597,6 +661,14 @@
   }
 
   function handleStationListClick(event) {
+    const favoriteButton = event.target.closest(".station-option-favorite");
+
+    if (favoriteButton && stationList.contains(favoriteButton)) {
+      event.stopPropagation();
+      stationFavorites.toggle(favoriteButton.dataset.stationId);
+      return;
+    }
+
     const stationOption = event.target.closest(".station-option");
     const stationId = stationOption?.dataset.stationId;
 
@@ -606,6 +678,19 @@
 
     player.selectStation(stationId);
     renderStations();
+  }
+
+  function handleCurrentStationFavoriteClick() {
+    const currentStation = player.getCurrentStation();
+
+    if (currentStation?.id) {
+      stationFavorites.toggle(currentStation.id);
+    }
+  }
+
+  function syncStationFavoriteViews() {
+    renderStations();
+    updateCurrentStationFavorite();
   }
 
   function handleDocumentKeydown(event) {
@@ -940,6 +1025,10 @@
   );
   controlTrack.addEventListener("transitionend", handleDrawerTransitionEnd);
   stationList.addEventListener("click", handleStationListClick);
+  currentStationFavoriteButton.addEventListener(
+    "click",
+    handleCurrentStationFavoriteClick
+  );
   searchInput.addEventListener("input", renderStations);
   clearButton.addEventListener("click", () => {
     searchInput.value = "";
@@ -948,7 +1037,11 @@
   });
   document.addEventListener("keydown", handleDocumentKeydown);
   document.addEventListener("pointerdown", handleDocumentPointerdown);
-  document.addEventListener("easy-radio:station-change", renderStations);
+  document.addEventListener("easy-radio:station-change", syncStationFavoriteViews);
+  document.addEventListener(
+    "easy-radio:favorites-change",
+    syncStationFavoriteViews
+  );
   document.addEventListener(
     "easy-radio:show-current-station",
     handleShowCurrentStationRequest
@@ -964,5 +1057,6 @@
   }
 
   updateStationSortSelection();
+  updateCurrentStationFavorite();
   setDisplayMode(DisplayMode.LIST);
 })();

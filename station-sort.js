@@ -34,15 +34,32 @@
       return match ? Number.parseFloat(match[0]) : Number.NaN;
     }
 
-    function sortStations(stations, mode) {
+    function sortStations(stations, mode, favoriteIds = []) {
       const source = Array.isArray(stations) ? stations : [];
       const normalizedMode = normalizeSortMode(mode);
+      const favoriteStationIds = new Set(
+        Array.isArray(favoriteIds) ? favoriteIds.map(String) : []
+      );
       const indexedStations = source.map((station, sourceIndex) => ({
         station,
         sourceIndex
       }));
 
       if (normalizedMode === SortMode.DEFAULT) {
+        indexedStations.sort((left, right) => {
+          const leftIsFavorite = favoriteStationIds.has(
+            String(left.station?.id || "")
+          );
+          const rightIsFavorite = favoriteStationIds.has(
+            String(right.station?.id || "")
+          );
+
+          return (
+            Number(rightIsFavorite) - Number(leftIsFavorite) ||
+            left.sourceIndex - right.sourceIndex
+          );
+        });
+
         return indexedStations.map(({ station }) => station);
       }
 
