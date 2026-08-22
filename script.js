@@ -26,6 +26,9 @@ const embeddedStationPlayerHost = document.getElementById(
 const embeddedStationPlayerReset = document.getElementById(
   "embeddedStationPlayerReset"
 );
+const embeddedStationPlayerLockToggle = document.getElementById(
+  "embeddedStationPlayerLockToggle"
+);
 const embeddedStationPlayerStatus = document.getElementById(
   "embeddedStationPlayerStatus"
 );
@@ -66,6 +69,7 @@ let volumeAtSliderStart = 1;
 let currentStation = stations[0] || null;
 let embeddedStationPlayerFrame = null;
 let isEmbeddedStationPlayerCollapsed = false;
+let isEmbeddedStationPlayerUnlocked = false;
 let currentDisplayMode = "list";
 
 function initializeVersionDisplay() {
@@ -206,6 +210,12 @@ function updateEmbeddedStationPlayerVisibility() {
   embeddedStationPlayerElement.hidden = !hasIframe;
   embeddedStationPlayerElement.classList.toggle("is-parked", isParked);
   embeddedStationPlayerElement.classList.toggle("is-collapsed", isCollapsed);
+  embeddedStationPlayerElement.classList.toggle(
+    "is-unlocked",
+    hasIframe && isEmbeddedStationPlayerUnlocked
+  );
+  embeddedStationPlayerElement.dataset.playerMode =
+    isEmbeddedStationPlayerUnlocked ? "unlocked" : "locked";
   embeddedStationPlayerElement.setAttribute(
     "aria-hidden",
     String(!isActive)
@@ -219,9 +229,18 @@ function updateEmbeddedStationPlayerVisibility() {
   );
 
   embeddedStationPlayerReset.tabIndex = isActive ? 0 : -1;
-
+  embeddedStationPlayerLockToggle.hidden = !isActive || isCollapsed;
+  embeddedStationPlayerLockToggle.tabIndex =
+    isActive && !isCollapsed ? 0 : -1;
+  embeddedStationPlayerLockToggle.textContent = isEmbeddedStationPlayerUnlocked
+    ? "鎖定官方播放器"
+    : "解鎖官方播放器";
   if (hasIframe) {
     embeddedStationPlayerFrame.tabIndex = isActive && !isCollapsed ? 0 : -1;
+    embeddedStationPlayerFrame.setAttribute(
+      "scrolling",
+      isEmbeddedStationPlayerUnlocked ? "auto" : "no"
+    );
   }
 
   updatePlaybackUI();
@@ -230,6 +249,7 @@ function updateEmbeddedStationPlayerVisibility() {
 function destroyEmbeddedStationPlayer() {
   embeddedStationPlayerFrame = null;
   isEmbeddedStationPlayerCollapsed = false;
+  isEmbeddedStationPlayerUnlocked = false;
   embeddedStationPlayerHost.replaceChildren();
   updateEmbeddedStationPlayerVisibility();
 }
@@ -300,6 +320,20 @@ function toggleEmbeddedStationPlayer() {
   }
 
   isEmbeddedStationPlayerCollapsed = !isEmbeddedStationPlayerCollapsed;
+  updateEmbeddedStationPlayerVisibility();
+}
+
+function toggleEmbeddedStationPlayerLock() {
+  if (
+    !isEmbeddedPlayerStation(currentStation) ||
+    currentDisplayMode !== "single" ||
+    embeddedStationPlayerFrame === null ||
+    isEmbeddedStationPlayerCollapsed
+  ) {
+    return;
+  }
+
+  isEmbeddedStationPlayerUnlocked = !isEmbeddedStationPlayerUnlocked;
   updateEmbeddedStationPlayerVisibility();
 }
 
@@ -846,6 +880,10 @@ document.addEventListener(
 embeddedStationPlayerReset.addEventListener(
   "click",
   resetEmbeddedStationPlayer
+);
+embeddedStationPlayerLockToggle.addEventListener(
+  "click",
+  toggleEmbeddedStationPlayerLock
 );
 
 playButton.addEventListener("click", () => {

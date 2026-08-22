@@ -52,6 +52,8 @@ test("the official player host starts empty and is styled responsively", () => {
   assert.match(script, /若播放器出現「確定」，請先按下開始收聽/);
   assert.doesNotMatch(script, /請按播放器中的「確定」開始收聽/);
   assert.match(embeddedPlayer, /id="embeddedStationPlayerHost"/);
+  assert.match(embeddedPlayer, /id="embeddedStationPlayerLockToggle"/);
+  assert.match(embeddedPlayer, /解鎖官方播放器/);
   assert.match(embeddedPlayer, /id="embeddedStationPlayerReset"/);
   assert.match(embeddedPlayer, /aria-controls="embeddedStationPlayerHost"/);
   assert.match(embeddedPlayer, /重新載入官方播放器/);
@@ -70,7 +72,19 @@ test("the official player host starts empty and is styled responsively", () => {
   assert.ok(embeddedPlayerStart > singleViewStart);
   assert.match(
     styles,
-    /#embeddedStationPlayerHost iframe\s*\{[\s\S]*?width: 100%;[\s\S]*?height: clamp\(260px, 52vh, 420px\);[\s\S]*?border: 0;/
+    /--greenpeace-player-full-page-height:\s*520px;[\s\S]*?--greenpeace-player-unlocked-height:\s*clamp\(260px, 52vh, 420px\);/
+  );
+  assert.match(
+    styles,
+    /#embeddedStationPlayerHost\s*\{[\s\S]*?width:\s*100%;[\s\S]*?max-width:\s*100%;[\s\S]*?overflow:\s*hidden;/
+  );
+  assert.match(
+    styles,
+    /#embeddedStationPlayerHost iframe\s*\{[\s\S]*?width:\s*100%;[\s\S]*?max-width:\s*100%;[\s\S]*?height:\s*var\(--greenpeace-player-full-page-height\);[\s\S]*?border:\s*0;/
+  );
+  assert.match(
+    styles,
+    /\.embedded-station-player\.is-unlocked #embeddedStationPlayerHost iframe\s*\{[\s\S]*?height:\s*var\(--greenpeace-player-unlocked-height\);/
   );
 });
 
@@ -101,6 +115,72 @@ test("reload is presented as a secondary recovery action", () => {
   assert.doesNotMatch(script, /\bconfirm\s*\(/);
 });
 
+test("lock and unlock are one low-priority layout fallback", () => {
+  const embeddedPlayer =
+    html.match(
+      /<section[\s\S]*?id="embeddedStationPlayer"[\s\S]*?<\/section>/
+    )?.[0] || "";
+  const modeControl =
+    embeddedPlayer.match(
+      /<button[\s\S]*?id="embeddedStationPlayerLockToggle"[\s\S]*?<\/button>/
+    )?.[0] || "";
+  const visibilityFunction =
+    script.match(
+      /function updateEmbeddedStationPlayerVisibility\(\) \{[\s\S]*?\n\}/
+    )?.[0] || "";
+  const toggleFunction =
+    script.match(
+      /function toggleEmbeddedStationPlayerLock\(\) \{[\s\S]*?\n\}/
+    )?.[0] || "";
+
+  assert.equal(
+    (embeddedPlayer.match(/id="embeddedStationPlayerLockToggle"/g) || [])
+      .length,
+    1
+  );
+  assert.match(modeControl, /type="button"/);
+  assert.match(modeControl, /aria-controls="embeddedStationPlayerHost"/);
+  assert.match(modeControl, /hidden/);
+  assert.match(modeControl, /解鎖官方播放器/);
+  assert.match(
+    styles,
+    /\.embedded-station-player-lock-toggle\s*\{[\s\S]*?min-height:\s*44px;[\s\S]*?border:\s*0;[\s\S]*?background:\s*transparent;/
+  );
+  assert.match(
+    visibilityFunction,
+    /classList\.toggle\([\s\S]*?"is-unlocked",[\s\S]*?isEmbeddedStationPlayerUnlocked/
+  );
+  assert.match(
+    visibilityFunction,
+    /embeddedStationPlayerLockToggle\.hidden = !isActive \|\| isCollapsed/
+  );
+  assert.match(
+    visibilityFunction,
+    /"鎖定官方播放器"[\s\S]*?: "解鎖官方播放器"/
+  );
+  assert.match(
+    visibilityFunction,
+    /"scrolling",[\s\S]*?isEmbeddedStationPlayerUnlocked \? "auto" : "no"/
+  );
+  assert.match(
+    toggleFunction,
+    /isEmbeddedStationPlayerUnlocked = !isEmbeddedStationPlayerUnlocked/
+  );
+  assert.match(toggleFunction, /updateEmbeddedStationPlayerVisibility\(\)/);
+  assert.doesNotMatch(
+    toggleFunction,
+    /destroyEmbeddedStationPlayer|showEmbeddedStationPlayer|replaceChildren|remove\(|\.src|append\(|createElement/
+  );
+  assert.doesNotMatch(
+    `${html}\n${script}`,
+    /contentDocument|MutationObserver|postMessage|embedded-station-player-overlay/
+  );
+  assert.doesNotMatch(
+    styles.match(/#embeddedStationPlayerHost iframe\s*\{[\s\S]*?\}/)?.[0] || "",
+    /pointer-events/
+  );
+});
+
 test("normal player content precedes the single recovery section", () => {
   const embeddedPlayer =
     html.match(
@@ -108,13 +188,17 @@ test("normal player content precedes the single recovery section", () => {
     )?.[0] || "";
   const helperIndex = embeddedPlayer.indexOf('id="embeddedStationPlayerStatus"');
   const hostIndex = embeddedPlayer.indexOf('id="embeddedStationPlayerHost"');
+  const modeControlIndex = embeddedPlayer.indexOf(
+    'class="embedded-station-player-mode-control"'
+  );
   const recoveryIndex = embeddedPlayer.indexOf(
     'class="embedded-station-player-recovery"'
   );
 
   assert.ok(helperIndex >= 0);
   assert.ok(hostIndex > helperIndex);
-  assert.ok(recoveryIndex > hostIndex);
+  assert.ok(modeControlIndex > hostIndex);
+  assert.ok(recoveryIndex > modeControlIndex);
   assert.equal(
     (embeddedPlayer.match(/class="embedded-station-player-recovery"/g) || [])
       .length,
@@ -291,7 +375,8 @@ test("runtime lifecycle preserves iframe identity, src and marker until manual r
     "showEmbeddedStationPlayer",
     "parkEmbeddedStationPlayer",
     "resetEmbeddedStationPlayer",
-    "toggleEmbeddedStationPlayer"
+    "toggleEmbeddedStationPlayer",
+    "toggleEmbeddedStationPlayerLock"
   ];
   const functionSources = functionNames.map((name) => {
     const source =
@@ -318,6 +403,7 @@ test("runtime lifecycle preserves iframe identity, src and marker until manual r
       let currentDisplayMode = "single";
       let embeddedStationPlayerFrame = null;
       let isEmbeddedStationPlayerCollapsed = false;
+      let isEmbeddedStationPlayerUnlocked = false;
       let iframeRequestCount = 0;
       let iframeSrcAssignmentCount = 0;
 
@@ -330,6 +416,7 @@ test("runtime lifecycle preserves iframe identity, src and marker until manual r
           hidden: false,
           tabIndex: 0,
           textContent: "",
+          dataset: {},
           classList: {
             toggle(name, enabled) {
               if (enabled) classes.add(name);
@@ -351,6 +438,7 @@ test("runtime lifecycle preserves iframe identity, src and marker until manual r
 
       const embeddedStationPlayerElement = createElementState();
       const embeddedStationPlayerReset = createElementState();
+      const embeddedStationPlayerLockToggle = createElementState();
       const embeddedStationPlayerStatus = createElementState();
       const embeddedStationPlayerHost = {
         ...createElementState(),
@@ -369,6 +457,7 @@ test("runtime lifecycle preserves iframe identity, src and marker until manual r
           if (tagName !== "iframe") throw new Error("unexpected element");
           iframeRequestCount += 1;
           const frame = {
+            ...createElementState(),
             tagName: "IFRAME",
             title: "",
             allow: "",
@@ -400,6 +489,7 @@ test("runtime lifecycle preserves iframe identity, src and marker until manual r
         park: parkEmbeddedStationPlayer,
         reset: resetEmbeddedStationPlayer,
         toggle: toggleEmbeddedStationPlayer,
+        toggleLock: toggleEmbeddedStationPlayerLock,
         setStation(station) {
           currentStation = station;
           updateEmbeddedStationPlayerVisibility();
@@ -416,6 +506,15 @@ test("runtime lifecycle preserves iframe identity, src and marker until manual r
         },
         srcAssignmentCount() {
           return iframeSrcAssignmentCount;
+        },
+        mode() {
+          return embeddedStationPlayerElement.dataset.playerMode;
+        },
+        modeLabel() {
+          return embeddedStationPlayerLockToggle.textContent;
+        },
+        modeControlHidden() {
+          return embeddedStationPlayerLockToggle.hidden;
         },
         hostContains(frame) {
           return embeddedStationPlayerHost.children.includes(frame);
@@ -434,12 +533,40 @@ test("runtime lifecycle preserves iframe identity, src and marker until manual r
   assert.equal(lifecycle.requestCount(), 1);
   assert.equal(lifecycle.srcAssignmentCount(), 1);
   assert.ok(lifecycle.hostContains(frameA));
+  assert.equal(lifecycle.mode(), "locked");
+  assert.equal(lifecycle.modeLabel(), "解鎖官方播放器");
+  assert.equal(frameA.getAttribute("scrolling"), "no");
+
+  lifecycle.toggleLock();
+  assert.equal(lifecycle.frame(), frameA);
+  assert.equal(lifecycle.mode(), "unlocked");
+  assert.equal(lifecycle.modeLabel(), "鎖定官方播放器");
+  assert.equal(frameA.getAttribute("scrolling"), "auto");
+  assert.equal(lifecycle.requestCount(), 1);
+  assert.equal(lifecycle.srcAssignmentCount(), 1);
+
+  lifecycle.toggle();
+  assert.equal(lifecycle.frame(), frameA);
+  assert.equal(lifecycle.modeControlHidden(), true);
+  assert.equal(lifecycle.mode(), "unlocked");
+  lifecycle.toggle();
+  assert.equal(lifecycle.frame(), frameA);
+  assert.equal(lifecycle.modeControlHidden(), false);
+  assert.equal(lifecycle.mode(), "unlocked");
 
   lifecycle.setView("list");
   lifecycle.park();
   lifecycle.setView("single");
   lifecycle.show(lifecycle.greenpeace);
   assert.equal(lifecycle.frame(), frameA);
+  assert.equal(lifecycle.mode(), "unlocked");
+
+  lifecycle.setView("settings");
+  lifecycle.park();
+  lifecycle.setView("single");
+  lifecycle.show(lifecycle.greenpeace);
+  assert.equal(lifecycle.frame(), frameA);
+  assert.equal(lifecycle.mode(), "unlocked");
 
   lifecycle.setStation(lifecycle.ordinary);
   lifecycle.park();
@@ -461,6 +588,15 @@ test("runtime lifecycle preserves iframe identity, src and marker until manual r
   assert.equal(lifecycle.frame().src, originalSrc);
   assert.equal(lifecycle.requestCount(), 1);
   assert.equal(lifecycle.srcAssignmentCount(), 1);
+  assert.equal(lifecycle.mode(), "unlocked");
+
+  lifecycle.toggleLock();
+  assert.equal(lifecycle.frame(), frameA);
+  assert.equal(lifecycle.mode(), "locked");
+  assert.equal(lifecycle.modeLabel(), "解鎖官方播放器");
+  assert.equal(frameA.getAttribute("scrolling"), "no");
+  assert.equal(lifecycle.requestCount(), 1);
+  assert.equal(lifecycle.srcAssignmentCount(), 1);
 
   lifecycle.reset();
   const frameB = lifecycle.frame();
@@ -472,6 +608,8 @@ test("runtime lifecycle preserves iframe identity, src and marker until manual r
   assert.equal(frameB.src, originalSrc);
   assert.equal(lifecycle.requestCount(), 2);
   assert.equal(lifecycle.srcAssignmentCount(), 2);
+  assert.equal(lifecycle.mode(), "locked");
+  assert.equal(frameB.getAttribute("scrolling"), "no");
 });
 test("manual reset is the explicit iframe destroy and recreate recovery path", () => {
   const destroyFunction =
@@ -485,6 +623,7 @@ test("manual reset is the explicit iframe destroy and recreate recovery path", (
 
   assert.match(destroyFunction, /embeddedStationPlayerFrame = null/);
   assert.match(destroyFunction, /isEmbeddedStationPlayerCollapsed = false/);
+  assert.match(destroyFunction, /isEmbeddedStationPlayerUnlocked = false/);
   assert.match(
     destroyFunction,
     /embeddedStationPlayerHost\.replaceChildren\(\)/

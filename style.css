@@ -28,6 +28,8 @@
   --red: #d92d22;
   --green: #2e9638;
   --shadow: 0 12px 30px rgba(31, 17, 7, 0.25);
+  --greenpeace-player-full-page-height: 520px;
+  --greenpeace-player-unlocked-height: clamp(260px, 52vh, 420px);
 }
 
 html,
@@ -284,6 +286,37 @@ button {
   border-top: 1px solid #e3d7c3;
 }
 
+.embedded-station-player-mode-control {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.embedded-station-player-lock-toggle {
+  min-height: 44px;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #5f4e3e;
+  font-size: 16px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.embedded-station-player-lock-toggle:hover {
+  background: #f7efe2;
+}
+
+.embedded-station-player-lock-toggle:active {
+  transform: translateY(1px);
+}
+
 .embedded-station-player .embedded-station-player-recovery-hint {
   margin: 0;
   color: #6a5f53;
@@ -328,6 +361,8 @@ button {
 }
 
 #embeddedStationPlayerHost {
+  width: 100%;
+  max-width: 100%;
   min-width: 0;
   margin-top: 12px;
   overflow: hidden;
@@ -362,9 +397,14 @@ button {
 #embeddedStationPlayerHost iframe {
   display: block;
   width: 100%;
-  height: clamp(260px, 52vh, 420px);
+  max-width: 100%;
+  height: var(--greenpeace-player-full-page-height);
   border: 0;
   background: #fff;
+}
+
+.embedded-station-player.is-unlocked #embeddedStationPlayerHost iframe {
+  height: var(--greenpeace-player-unlocked-height);
 }
 
 .station-empty-state {
@@ -681,6 +721,7 @@ button {
 .settings-button:focus-visible,
 .station-search-clear:focus-visible,
 .embedded-station-player-reset:focus-visible,
+.embedded-station-player-lock-toggle:focus-visible,
 .station-search input:focus-visible,
 html.uses-keyboard-navigation .view-toggle-button:focus,
 html.uses-keyboard-navigation .settings-button:focus {
@@ -704,6 +745,7 @@ html.uses-keyboard-navigation .station-favorite-button:focus {
 html:not(.uses-keyboard-navigation) .view-toggle-button:focus,
 html:not(.uses-keyboard-navigation) .settings-button:focus,
 html:not(.uses-keyboard-navigation) .embedded-station-player-reset:focus,
+html:not(.uses-keyboard-navigation) .embedded-station-player-lock-toggle:focus,
 html:not(.uses-keyboard-navigation) .station-sort-button:focus,
 html:not(.uses-keyboard-navigation) .station-sort-menu button:focus,
 html:not(.uses-keyboard-navigation) .station-option:focus,
